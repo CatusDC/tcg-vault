@@ -41,7 +41,7 @@ def go_home():
     st.session_state.game = None
 
 # =========================
-# FILTER DATA
+# GAME FILTER
 # =========================
 
 def get_game_df():
@@ -52,14 +52,12 @@ def get_game_df():
 df_game = get_game_df()
 
 # =========================================================
-# 🏠 HOME (ONLY GAME SELECTOR)
+# 🏠 HOME
 # =========================================================
 
 if st.session_state.game is None:
 
     st.title("🎴 TCG Vault")
-
-    st.subheader("Seleziona un gioco")
 
     stats = df.groupby("game").agg(
         owned=("v1own", "sum"),
@@ -75,27 +73,24 @@ if st.session_state.game is None:
         with cols[i % 3]:
 
             st.markdown(f"### {row['game']}")
-
             st.progress(pct)
-
             st.caption(f"{pct*100:05.2f}% completato")
 
             st.button(
                 "Apri",
-                use_container_width=True,
                 key=f"open_{row['game']}",
+                use_container_width=True,
                 on_click=select_game,
                 args=(row["game"],)
             )
 
 # =========================================================
-# 🎮 GAME VIEW (ONLY IF GAME SELECTED)
+# 🎮 GAME VIEW
 # =========================================================
 
 else:
 
     st.title(f"🎮 {st.session_state.game}")
-
     st.button("🏠 Home", on_click=go_home)
 
     df_game = get_game_df()
@@ -133,6 +128,10 @@ else:
         with col3:
             search = st.text_input("Ricerca")
 
+        # =========================
+        # BASE FILTER
+        # =========================
+
         filtered = df_game.copy()
 
         if rarity_filter != "All":
@@ -147,10 +146,46 @@ else:
                 filtered["tag"].str.contains(search, case=False, na=False)
             ]
 
+        # =========================
+        # vX FILTERS (CORRETTO)
+        # =========================
+
+        c1, c2, c3 = st.columns(3)
+
+        with c1:
+            hide_v1_complete = st.checkbox("Nascondi v1 completate")
+
+        with c2:
+            hide_v2_complete = st.checkbox("Nascondi v2 completate")
+
+        with c3:
+            hide_v3_complete = st.checkbox("Nascondi v3 completate")
+
+        # EXCEPTION: max = 0 NON FILTRARE
+        if hide_v1_complete:
+            filtered = filtered[
+                ~((filtered["v1own"] == filtered["v1max"]) & (filtered["v1max"] > 0))
+            ]
+
+        if hide_v2_complete:
+            filtered = filtered[
+                ~((filtered["v2own"] == filtered["v2max"]) & (filtered["v2max"] > 0))
+            ]
+
+        if hide_v3_complete:
+            filtered = filtered[
+                ~((filtered["v3own"] == filtered["v3max"]) & (filtered["v3max"] > 0))
+            ]
+
+        # =========================
+        # COMBINED COLUMNS
+        # =========================
+
         filtered["v1"] = filtered["v1own"].astype(str) + " / " + filtered["v1max"].astype(str)
         filtered["v2"] = filtered["v2own"].astype(str) + " / " + filtered["v2max"].astype(str)
         filtered["v3"] = filtered["v3own"].astype(str) + " / " + filtered["v3max"].astype(str)
 
+        # SET NASCOSTO (MA FILTRABILE)
         st.dataframe(
             filtered[["set", "tag", "name", "rarity", "v1", "v2", "v3"]],
             use_container_width=True,
