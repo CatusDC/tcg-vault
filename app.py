@@ -18,21 +18,30 @@ DATA_URL = "https://raw.githubusercontent.com/CatusDC/tcg_vault/main/data/collec
 @st.cache_data
 def load_data():
     r = requests.get(DATA_URL)
-
     if r.status_code != 200:
-        st.error(f"Errore caricamento JSON: {r.status_code}")
+        st.error(f"Errore JSON: {r.status_code}")
         st.stop()
-
     return r.json()
 
-
 data = load_data()
-cards = data.get("cards", [])
-df = pd.DataFrame(cards)
+df = pd.DataFrame(data.get("cards", []))
 
 if df.empty:
-    st.warning("Nessuna carta trovata")
+    st.warning("Nessun dato disponibile")
     st.stop()
+
+games = sorted(df["game"].dropna().unique().tolist())
+
+# =========================
+# GLOBAL GAME SELECTOR (UNICO)
+# =========================
+
+selected_game = st.sidebar.selectbox(
+    "🎮 Gioco",
+    games
+)
+
+df_game = df[df["game"] == selected_game].copy()
 
 # =========================
 # PROGRESS CIRCLE
@@ -56,22 +65,16 @@ def progress_circle(title, value, total):
                 text=f"{title}<br><b>{pct:06.2f}%</b>",
                 x=0.5,
                 y=0.5,
-                font_size=14,
+                font_size=13,
                 showarrow=False,
                 align="center"
             )
         ],
-        height=220,
-        width=220
+        height=200,
+        width=200
     )
 
     return fig
-
-# =========================
-# GAME LIST
-# =========================
-
-games = sorted(df["game"].dropna().unique().tolist())
 
 # =========================
 # TABS
@@ -82,7 +85,7 @@ home_tab, col_tab, recap_tab, set_tab = st.tabs(
 )
 
 # =========================================================
-# 🏠 HOME
+# 🏠 HOME (ALL GAMES - 6 CIRCOLI IN GRID 3x2)
 # =========================================================
 
 with home_tab:
@@ -90,23 +93,28 @@ with home_tab:
     st.title("🎴 TCG Vault Dashboard")
     st.subheader("Panoramica collezioni")
 
-    home_df = df.copy()
-
-    game_stats = home_df.groupby("game").agg(
+    stats = df.groupby("game").agg(
         owned=("v1own", "sum"),
         total=("v1max", "sum")
     ).reset_index()
 
-    cols = st.columns(len(game_stats))
+    cols = st.columns(3)
 
-    for i, row in game_stats.iterrows():
-        with cols[i]:
+    for i, row in stats.iterrows():
+
+        with cols[i % 3]:
+
             fig = progress_circle(
                 row["game"],
                 row["owned"],
                 row["total"]
             )
+
             st.plotly_chart(fig, use_container_width=True)
+
+        # nuova riga ogni 3 elementi
+        if (i + 1) % 3 == 0 and i != len(stats) - 1:
+            cols = st.columns(3)
 
 # =========================================================
 # 📋 COLLECTION
@@ -114,12 +122,8 @@ with home_tab:
 
 with col_tab:
 
-    selected_game = st.sidebar.selectbox("🎮 Gioco", games)
-    df_game = df[df["game"] == selected_game].copy()
-
     st.title(f"📋 Collection - {selected_game}")
 
-    # filters
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -135,7 +139,7 @@ with col_tab:
         )
 
     with col3:
-        search = st.text_input("Ricerca (name / tag)")
+        search = st.text_input("Ricerca")
 
     c1, c2, c3 = st.columns(3)
 
@@ -182,13 +186,10 @@ with col_tab:
     )
 
 # =========================================================
-# 📊 RECAP RARITY
+# 📊 RECAP
 # =========================================================
 
 with recap_tab:
-
-    selected_game = st.sidebar.selectbox("🎮 Gioco (Recap)", games, key="recap_game")
-    df_game = df[df["game"] == selected_game]
 
     st.title("📊 Recap Rarità")
 
@@ -216,9 +217,6 @@ with recap_tab:
 # =========================================================
 
 with set_tab:
-
-    selected_game = st.sidebar.selectbox("🎮 Gioco (Set Tracker)", games, key="set_game")
-    df_game = df[df["game"] == selected_game]
 
     st.title("📦 Set Completion Tracker")
 
