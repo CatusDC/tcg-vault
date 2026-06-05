@@ -39,7 +39,7 @@ if df.empty:
     st.stop()
 
 # =========================
-# GAME FILTER (NUOVO CORE)
+# GAME SELECTION
 # =========================
 
 games = sorted(df["game"].dropna().unique().tolist())
@@ -50,7 +50,7 @@ df = df[df["game"] == selected_game].copy()
 st.title(f"🎴 TCG Vault - {selected_game}")
 
 # =========================
-# TABS (DASHBOARD MODE)
+# TABS DASHBOARD
 # =========================
 
 tab1, tab2 = st.tabs(["📋 Collezione", "📊 Recap"])
@@ -61,9 +61,9 @@ tab1, tab2 = st.tabs(["📋 Collezione", "📊 Recap"])
 
 with tab1:
 
-    # =========================
-    # FILTRI BASE
-    # =========================
+    # -------------------------
+    # FILTERS
+    # -------------------------
 
     col1, col2, col3 = st.columns(3)
 
@@ -82,10 +82,6 @@ with tab1:
     with col3:
         search = st.text_input("Ricerca (name / tag)")
 
-    # =========================
-    # FILTRI COMPLETION
-    # =========================
-
     c1, c2, c3 = st.columns(3)
 
     with c1:
@@ -97,9 +93,9 @@ with tab1:
     with c3:
         hide_v3 = st.checkbox("Nascondi v3 completate")
 
-    # =========================
-    # APPLY FILTERS
-    # =========================
+    # -------------------------
+    # FILTER LOGIC
+    # -------------------------
 
     filtered = df.copy()
 
@@ -115,37 +111,23 @@ with tab1:
             filtered["tag"].str.contains(search, case=False, na=False)
         ]
 
-    # =========================
-    # SAFE COMPLETION FILTER
-    # (vmax=0 non rompe logica)
-    # =========================
-
+    # safe completion filters (gestisce vmax=0)
     if hide_v1:
-        filtered = filtered[
-            ~((filtered["v1max"] > 0) & (filtered["v1own"] == filtered["v1max"]))
-        ]
+        filtered = filtered[~((filtered["v1max"] > 0) & (filtered["v1own"] == filtered["v1max"]))]
 
     if hide_v2:
-        filtered = filtered[
-            ~((filtered["v2max"] > 0) & (filtered["v2own"] == filtered["v2max"]))
-        ]
+        filtered = filtered[~((filtered["v2max"] > 0) & (filtered["v2own"] == filtered["v2max"]))]
 
     if hide_v3:
-        filtered = filtered[
-            ~((filtered["v3max"] > 0) & (filtered["v3own"] == filtered["v3max"]))
-        ]
+        filtered = filtered[~((filtered["v3max"] > 0) & (filtered["v3own"] == filtered["v3max"]))]
 
-    # =========================
-    # COMBINED COLUMNS
-    # =========================
+    # -------------------------
+    # DISPLAY COLUMNS
+    # -------------------------
 
     filtered["v1"] = filtered["v1own"].astype(str) + " / " + filtered["v1max"].astype(str)
     filtered["v2"] = filtered["v2own"].astype(str) + " / " + filtered["v2max"].astype(str)
     filtered["v3"] = filtered["v3own"].astype(str) + " / " + filtered["v3max"].astype(str)
-
-    # =========================
-    # OUTPUT
-    # =========================
 
     display_df = filtered[[
         "set",
@@ -171,10 +153,6 @@ with tab2:
 
     recap = df.copy()
 
-    recap["v1_progress"] = recap["v1own"] / recap["v1max"].replace(0, 1)
-    recap["v2_progress"] = recap["v2own"] / recap["v2max"].replace(0, 1)
-    recap["v3_progress"] = recap["v3own"] / recap["v3max"].replace(0, 1)
-
     summary = recap.groupby("rarity").agg(
         total_v1=("v1own", "sum"),
         max_v1=("v1max", "sum"),
@@ -188,4 +166,8 @@ with tab2:
     summary["v2"] = summary["total_v2"].astype(str) + " / " + summary["max_v2"].astype(str)
     summary["v3"] = summary["total_v3"].astype(str) + " / " + summary["max_v3"].astype(str)
 
-    st.dataframe(summary[["rarity", "v1", "v2", "v3"]], use_container_width=True, hide_index=True)
+    st.dataframe(
+        summary[["rarity", "v1", "v2", "v3"]],
+        use_container_width=True,
+        hide_index=True
+    )
