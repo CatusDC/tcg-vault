@@ -21,26 +21,19 @@ GAMES = {
 BASE_URL = "https://raw.githubusercontent.com/CatusDC/tcg_vault/main/data/"
 
 # =========================
-# LOAD JSON (RAW)
+# LOAD JSON
 # =========================
 
 @st.cache_data
 def load_json(file_name):
     url = BASE_URL + file_name
-
     r = requests.get(url)
 
     if r.status_code != 200:
         st.error(f"Errore HTTP: {r.status_code}")
         st.stop()
 
-    try:
-        return r.json()
-    except Exception as e:
-        st.error("JSON non valido o non parsabile")
-        st.write("Debug raw response (prime 300 char):")
-        st.code(r.text[:300])
-        st.stop()
+    return r.json()
 
 # =========================
 # UI
@@ -49,13 +42,10 @@ def load_json(file_name):
 st.title("🎴 TCG Vault")
 
 game = st.sidebar.selectbox("Seleziona gioco", list(GAMES.keys()))
-
 file_name = GAMES[game]
 
 data = load_json(file_name)
-
 cards = data.get("cards", [])
-
 df = pd.DataFrame(cards)
 
 st.subheader(game)
@@ -65,7 +55,7 @@ if df.empty:
     st.stop()
 
 # =========================
-# FILTRI
+# FILTRI BASE
 # =========================
 
 col1, col2, col3 = st.columns(3)
@@ -86,6 +76,21 @@ with col3:
     search = st.text_input("Ricerca (name / tag)")
 
 # =========================
+# FILTRI COMPLETAMENTO (NUOVI)
+# =========================
+
+c1, c2, c3 = st.columns(3)
+
+with c1:
+    hide_v1_complete = st.checkbox("Nascondi v1 completate")
+
+with c2:
+    hide_v2_complete = st.checkbox("Nascondi v2 completate")
+
+with c3:
+    hide_v3_complete = st.checkbox("Nascondi v3 completate")
+
+# =========================
 # FILTER LOGIC
 # =========================
 
@@ -104,42 +109,71 @@ if search:
     ]
 
 # =========================
-# TRANSFORM UI (QUI LA PARTE IMPORTANTE)
+# COMBINAZIONE COLONNE
 # =========================
 
-def combine(v_own, v_max):
-    return f"{v_own} / {v_max}"
+def combine(own, maxv):
+    return f"{own} / {maxv}"
 
 filtered["v1"] = filtered.apply(lambda x: combine(x["v1own"], x["v1max"]), axis=1)
 filtered["v2"] = filtered.apply(lambda x: combine(x["v2own"], x["v2max"]), axis=1)
 filtered["v3"] = filtered.apply(lambda x: combine(x["v3own"], x["v3max"]), axis=1)
 
-# colonne finali pulite
-columns_to_show = ["set", "tag", "name", "rarity", "v1", "v2", "v3"]
+# =========================
+# LOGIC FILTRI COMPLETAMENTO
+# =========================
 
-# reset indice (rimuove colonna 0)
+if hide_v1_complete:
+    filtered = filtered[filtered["v1own"] != filtered["v1max"]]
+
+if hide_v2_complete:
+    filtered = filtered[filtered["v2own"] != filtered["v2max"]]
+
+if hide_v3_complete:
+    filtered = filtered[filtered["v3own"] != filtered["v3max"]]
+
+# reset index (niente colonna 0)
 filtered = filtered.reset_index(drop=True)
 
-st.write(f"Carte trovate: **{len(filtered)}**")
+# =========================
+# STYLING CONDIZIONALE
+# =========================
 
-st.dataframe(
-    filtered[columns_to_show],
-    use_container_width=True,
-    hide_index=True
-)
+def highlight(row):
+    styles = []
+
+    # v1
+    if row["v1own"] == row["v1max"]:
+        styles.append("background-color: #d4f8d4")  # verde tenue
+    else:
+        styles.append("background-color: #ffe5cc")  # arancio tenue
+
+    # v2
+    if row["v2own"] == row["v2max"]:
+        styles.append("background-color: #d4f8d4")
+    else:
+        styles.append("background-color: #ffe5cc")
+
+    # v3
+    if row["v3own"] == row["v3max"]:
+        styles.append("background-color: #d4f8d4")
+    else:
+        styles.append("background-color: #ffe5cc")
+
+    return [""] * (len(row) - 3) + styles  # solo ultime 3 colonne
+
 # =========================
 # OUTPUT
 # =========================
 
 st.write(f"Carte trovate: **{len(filtered)}**")
 
-columns_to_show = [
-    "set", "tag", "name", "rarity",
-    "v1own", "v1max",
-    "v2own", "v2max",
-    "v3own", "v3max"
-]
+columns_to_show = ["set", "tag", "name", "rarity", "v1", "v2", "v3"]
 
-existing_cols = [c for c in columns_to_show if c in filtered.columns]
+styled_df = filtered[columns_to_show].style.apply(highlight, axis=1)
 
-st.dataframe(filtered[existing_cols], use_container_width=True)
+st.dataframe(
+    styled_df,
+    use_container_width=True,
+    hide_index=True
+)
