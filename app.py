@@ -6,166 +6,63 @@ import pandas as pd
 # CONFIG
 # =========================
 
-st.set_page_config(page_title="TCG Vault Dashboard", layout="wide")
+st.set_page_config(page_title="TCG Vault", layout="wide")
 
-BASE_URL = "https://raw.githubusercontent.com/CatusDC/tcg_vault/main/data/"
-
-GAMES = {
-    "C - Lorcana JP": "c-lorcana-jp.json",
-    "C - Lorcana": "c-lorcana.json",
-    "C - Riftbound": "c-riftbound.json",
-    "C - Pokemon JP": "c-pokemon-jp.json",
-    "P - Lorcana": "p-lorcana.json",
-    "P - RIftbound": "p-riftbound.json"
-}
+DATA_URL = "https://raw.githubusercontent.com/CatusDC/tcg_vault/main/data/miss/collection.json"
 
 # =========================
-# LOAD
+# LOAD DATA
 # =========================
 
 @st.cache_data
-def load_json(file_name):
-    url = BASE_URL + file_name
-    r = requests.get(url)
+def load_data():
+    r = requests.get(DATA_URL)
 
     if r.status_code != 200:
-        return None
+        st.error(f"Errore caricamento JSON: {r.status_code}")
+        st.stop()
 
-    return r.json()
+    try:
+        return r.json()
+    except Exception:
+        st.error("JSON non valido o corrotto")
+        st.stop()
 
-def to_df(game_file):
-    data = load_json(game_file)
-    if not data:
-        return pd.DataFrame()
-    return pd.DataFrame(data.get("cards", []))
 
-# =========================
-# STATS
-# =========================
+data = load_data()
+cards = data.get("cards", [])
 
-def compute_stats(df):
-    if df.empty:
-        return 0, 0, 0
+df = pd.DataFrame(cards)
 
-    total_max = df["v1max"].sum() + df["v2max"].sum() + df["v3max"].sum()
-    total_own = df["v1own"].sum() + df["v2own"].sum() + df["v3own"].sum()
-
-    pct = (total_own / total_max * 100) if total_max > 0 else 0
-    return total_own, total_max, pct
+if df.empty:
+    st.warning("Nessuna carta trovata")
+    st.stop()
 
 # =========================
-# RECAP RARITY
+# GAME FILTER (NUOVO CORE)
 # =========================
 
-def build_recap(df):
-    recap = df.groupby("rarity").agg({
-        "v1own": "sum",
-        "v1max": "sum",
-        "v2own": "sum",
-        "v2max": "sum",
-        "v3own": "sum",
-        "v3max": "sum",
-    }).reset_index()
+games = sorted(df["game"].dropna().unique().tolist())
+selected_game = st.sidebar.selectbox("🎮 Gioco", games)
 
-    recap["v1"] = recap["v1own"].astype(int).astype(str) + " / " + recap["v1max"].astype(int).astype(str)
-    recap["v2"] = recap["v2own"].astype(int).astype(str) + " / " + recap["v2max"].astype(int).astype(str)
-    recap["v3"] = recap["v3own"].astype(int).astype(str) + " / " + recap["v3max"].astype(int).astype(str)
+df = df[df["game"] == selected_game].copy()
 
-    return recap
+st.title(f"🎴 TCG Vault - {selected_game}")
 
 # =========================
-# SESSION STATE
+# TABS (DASHBOARD MODE)
 # =========================
 
-if "page" not in st.session_state:
-    st.session_state.page = "home"
-
-if "selected_game" not in st.session_state:
-    st.session_state.selected_game = None
+tab1, tab2 = st.tabs(["📋 Collezione", "📊 Recap"])
 
 # =========================
-# NAV HELPERS
+# TAB 1 - COLLECTION
 # =========================
 
-def go_home():
-    st.session_state.page = "home"
-    st.session_state.selected_game = None
-
-def open_game(game_name):
-    st.session_state.page = "game"
-    st.session_state.selected_game = game_name
-
-# =========================
-# HOME DASHBOARD
-# =========================
-
-def render_home():
-    st.title("🎴 TCG Vault Dashboard")
-
-    cols = st.columns(3)
-
-    for i, (game_name, file_name) in enumerate(GAMES.items()):
-        df = to_df(file_name)
-
-        own, total, pct = compute_stats(df)
-
-        with cols[i % 3]:
-            st.metric(
-                label=game_name,
-                value=f"{pct:.1f}% completato",
-                delta=f"{own}/{total}"
-            )
-
-            st.progress(pct / 100 if total > 0 else 0)
-
-            if st.button(f"Apri {game_name}", key=game_name):
-                open_game(game_name)
-
-# =========================
-# GAME PAGE
-# =========================
-
-def render_game():
-    game_name = st.session_state.selected_game
-    file_name = GAMES[game_name]
-
-    df = to_df(file_name)
-
-    st.title(f"🎮 {game_name}")
-
-    colA, colB = st.columns([1, 3])
-
-    with colA:
-        if st.button("⬅ Torna indietro"):
-            go_home()
-
-        view = st.radio(
-            "Vista",
-            ["Dettaglio", "Recap rarità"]
-        )
-
-    if df.empty:
-        st.warning("Nessun dato")
-        return
+with tab1:
 
     # =========================
-    # RECAP MODE
-    # =========================
-
-    if view == "Recap rarità":
-        recap = build_recap(df)
-
-        st.subheader("📊 Progress per rarità")
-
-        st.dataframe(
-            recap[["rarity", "v1", "v2", "v3"]],
-            use_container_width=True,
-            hide_index=True
-        )
-        return
-
-    # =========================
-    # DETAIL MODE FILTERS
+    # FILTRI BASE
     # =========================
 
     col1, col2, col3 = st.columns(3)
@@ -183,21 +80,25 @@ def render_game():
         )
 
     with col3:
-        search = st.text_input("Search")
+        search = st.text_input("Ricerca (name / tag)")
+
+    # =========================
+    # FILTRI COMPLETION
+    # =========================
 
     c1, c2, c3 = st.columns(3)
 
     with c1:
-        hide_v1 = st.checkbox("Hide v1 complete")
+        hide_v1 = st.checkbox("Nascondi v1 completate")
 
     with c2:
-        hide_v2 = st.checkbox("Hide v2 complete")
+        hide_v2 = st.checkbox("Nascondi v2 completate")
 
     with c3:
-        hide_v3 = st.checkbox("Hide v3 complete")
+        hide_v3 = st.checkbox("Nascondi v3 completate")
 
     # =========================
-    # FILTER LOGIC
+    # APPLY FILTERS
     # =========================
 
     filtered = df.copy()
@@ -214,37 +115,77 @@ def render_game():
             filtered["tag"].str.contains(search, case=False, na=False)
         ]
 
-    # FIX vX filters
+    # =========================
+    # SAFE COMPLETION FILTER
+    # (vmax=0 non rompe logica)
+    # =========================
+
     if hide_v1:
-        filtered = filtered[~((filtered["v1max"] > 0) & (filtered["v1own"] == filtered["v1max"]))]
+        filtered = filtered[
+            ~((filtered["v1max"] > 0) & (filtered["v1own"] == filtered["v1max"]))
+        ]
 
     if hide_v2:
-        filtered = filtered[~((filtered["v2max"] > 0) & (filtered["v2own"] == filtered["v2max"]))]
+        filtered = filtered[
+            ~((filtered["v2max"] > 0) & (filtered["v2own"] == filtered["v2max"]))
+        ]
 
     if hide_v3:
-        filtered = filtered[~((filtered["v3max"] > 0) & (filtered["v3own"] == filtered["v3max"]))]
+        filtered = filtered[
+            ~((filtered["v3max"] > 0) & (filtered["v3own"] == filtered["v3max"]))
+        ]
 
     # =========================
-    # DISPLAY
+    # COMBINED COLUMNS
     # =========================
 
     filtered["v1"] = filtered["v1own"].astype(str) + " / " + filtered["v1max"].astype(str)
     filtered["v2"] = filtered["v2own"].astype(str) + " / " + filtered["v2max"].astype(str)
     filtered["v3"] = filtered["v3own"].astype(str) + " / " + filtered["v3max"].astype(str)
 
-    st.subheader(f"Carte trovate: {len(filtered)}")
+    # =========================
+    # OUTPUT
+    # =========================
 
-    st.dataframe(
-        filtered[["tag", "name", "rarity", "v1", "v2", "v3"]],
-        use_container_width=True,
-        hide_index=True
-    )
+    display_df = filtered[[
+        "set",
+        "tag",
+        "name",
+        "rarity",
+        "v1",
+        "v2",
+        "v3"
+    ]].reset_index(drop=True)
+
+    st.write(f"Carte trovate: **{len(display_df)}**")
+
+    st.dataframe(display_df, use_container_width=True, hide_index=True)
 
 # =========================
-# ROUTER
+# TAB 2 - RECAP
 # =========================
 
-if st.session_state.page == "home":
-    render_home()
-else:
-    render_game()
+with tab2:
+
+    st.subheader("📊 Recap per rarità")
+
+    recap = df.copy()
+
+    recap["v1_progress"] = recap["v1own"] / recap["v1max"].replace(0, 1)
+    recap["v2_progress"] = recap["v2own"] / recap["v2max"].replace(0, 1)
+    recap["v3_progress"] = recap["v3own"] / recap["v3max"].replace(0, 1)
+
+    summary = recap.groupby("rarity").agg(
+        total_v1=("v1own", "sum"),
+        max_v1=("v1max", "sum"),
+        total_v2=("v2own", "sum"),
+        max_v2=("v2max", "sum"),
+        total_v3=("v3own", "sum"),
+        max_v3=("v3max", "sum"),
+    ).reset_index()
+
+    summary["v1"] = summary["total_v1"].astype(str) + " / " + summary["max_v1"].astype(str)
+    summary["v2"] = summary["total_v2"].astype(str) + " / " + summary["max_v2"].astype(str)
+    summary["v3"] = summary["total_v3"].astype(str) + " / " + summary["max_v3"].astype(str)
+
+    st.dataframe(summary[["rarity", "v1", "v2", "v3"]], use_container_width=True, hide_index=True)
