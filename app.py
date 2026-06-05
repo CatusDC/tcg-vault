@@ -87,6 +87,7 @@ with home_tab:
             st.button(
                 "Apri",
                 use_container_width=True,
+                key=f"open_{row['game']}",
                 on_click=select_game,
                 args=(row["game"],)
             )
