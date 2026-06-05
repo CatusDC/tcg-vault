@@ -126,20 +126,24 @@ if hide_v3_complete:
     filtered = filtered[filtered["v3own"] != filtered["v3max"]]
 
 # =========================
-# DISPLAY (SAFE)
+# COLONNE COMBINATE
+# =========================
+
+filtered["v1"] = filtered["v1own"].astype(str) + " / " + filtered["v1max"].astype(str)
+filtered["v2"] = filtered["v2own"].astype(str) + " / " + filtered["v2max"].astype(str)
+filtered["v3"] = filtered["v3own"].astype(str) + " / " + filtered["v3max"].astype(str)
+
+# =========================
+# OUTPUT (SET NASCOSTA MA USATA PER FILTRI)
 # =========================
 
 display_df = filtered[[
-    "set",
     "tag",
     "name",
     "rarity",
-    "v1own",
-    "v1max",
-    "v2own",
-    "v2max",
-    "v3own",
-    "v3max"
+    "v1",
+    "v2",
+    "v3"
 ]].reset_index(drop=True)
 
 st.write(f"Carte trovate: **{len(display_df)}**")
