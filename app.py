@@ -71,18 +71,16 @@ if df.empty:
 col1, col2, col3 = st.columns(3)
 
 with col1:
+    rarity_filter = "All"
     if "rarity" in df.columns:
         rarity_list = ["All"] + sorted(df["rarity"].dropna().unique().tolist())
         rarity_filter = st.selectbox("Rarità", rarity_list)
-    else:
-        rarity_filter = "All"
 
 with col2:
+    set_filter = "All"
     if "set" in df.columns:
         set_list = ["All"] + sorted(df["set"].dropna().unique().tolist())
         set_filter = st.selectbox("Set", set_list)
-    else:
-        set_filter = "All"
 
 with col3:
     search = st.text_input("Ricerca (name / tag)")
@@ -93,19 +91,42 @@ with col3:
 
 filtered = df.copy()
 
-if rarity_filter != "All" and "rarity" in df.columns:
+if rarity_filter != "All":
     filtered = filtered[filtered["rarity"] == rarity_filter]
 
-if set_filter != "All" and "set" in df.columns:
+if set_filter != "All":
     filtered = filtered[filtered["set"] == set_filter]
 
 if search:
-    if "name" in df.columns:
-        filtered = filtered[
-            df["name"].str.contains(search, case=False, na=False)
-            | df["tag"].str.contains(search, case=False, na=False)
-        ]
+    filtered = filtered[
+        filtered["name"].str.contains(search, case=False, na=False)
+        | filtered["tag"].str.contains(search, case=False, na=False)
+    ]
 
+# =========================
+# TRANSFORM UI (QUI LA PARTE IMPORTANTE)
+# =========================
+
+def combine(v_own, v_max):
+    return f"{v_own} / {v_max}"
+
+filtered["v1"] = filtered.apply(lambda x: combine(x["v1own"], x["v1max"]), axis=1)
+filtered["v2"] = filtered.apply(lambda x: combine(x["v2own"], x["v2max"]), axis=1)
+filtered["v3"] = filtered.apply(lambda x: combine(x["v3own"], x["v3max"]), axis=1)
+
+# colonne finali pulite
+columns_to_show = ["set", "tag", "name", "rarity", "v1", "v2", "v3"]
+
+# reset indice (rimuove colonna 0)
+filtered = filtered.reset_index(drop=True)
+
+st.write(f"Carte trovate: **{len(filtered)}**")
+
+st.dataframe(
+    filtered[columns_to_show],
+    use_container_width=True,
+    hide_index=True
+)
 # =========================
 # OUTPUT
 # =========================
