@@ -144,9 +144,9 @@ def highlight(row):
 
     # v1
     if row["v1own"] == row["v1max"]:
-        styles.append("background-color: #d4f8d4")  # verde tenue
+        styles.append("background-color: #d4f8d4")
     else:
-        styles.append("background-color: #ffe5cc")  # arancio tenue
+        styles.append("background-color: #ffe5cc")
 
     # v2
     if row["v2own"] == row["v2max"]:
@@ -160,7 +160,9 @@ def highlight(row):
     else:
         styles.append("background-color: #ffe5cc")
 
-    return [""] * (len(row) - 3) + styles  # solo ultime 3 colonne
+    # colonne extra senza stile
+    extra_cols = len(row) - 3
+    return [""] * extra_cols + styles
 
 # =========================
 # OUTPUT
@@ -168,7 +170,12 @@ def highlight(row):
 
 st.write(f"Carte trovate: **{len(filtered)}**")
 
+# mantieni DF completo per styling
+styled_df = filtered.style.apply(highlight, axis=1)
+
+# poi selezioni solo le colonne da mostrare
 columns_to_show = ["set", "tag", "name", "rarity", "v1", "v2", "v3"]
+styled_df = styled_df.format()
 
 styled_df = filtered[columns_to_show].style.apply(highlight, axis=1)
 
