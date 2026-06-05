@@ -52,9 +52,9 @@ def load_json(file_name):
 
     data = r.json()
 
-    if "content" not in data:
-        st.error("File non valido o vuoto")
-        st.stop()
+    #if "content" not in data:
+        #st.error("File non valido o vuoto")
+        #st.stop()
 
     decoded = base64.b64decode(data["content"]).decode("utf-8")
 
