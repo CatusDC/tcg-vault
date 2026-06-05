@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-import json
 import pandas as pd
 
 # =========================
@@ -21,7 +20,7 @@ GAMES = {
 BASE_URL = "https://raw.githubusercontent.com/CatusDC/tcg_vault/main/data/"
 
 # =========================
-# LOAD JSON
+# LOAD DATA
 # =========================
 
 @st.cache_data
@@ -46,13 +45,14 @@ file_name = GAMES[game]
 
 data = load_json(file_name)
 cards = data.get("cards", [])
-df = pd.DataFrame(cards)
 
-st.subheader(game)
+df = pd.DataFrame(cards)
 
 if df.empty:
     st.warning("Nessuna carta trovata")
     st.stop()
+
+st.subheader(game)
 
 # =========================
 # FILTRI BASE
@@ -63,20 +63,24 @@ col1, col2, col3 = st.columns(3)
 with col1:
     rarity_filter = "All"
     if "rarity" in df.columns:
-        rarity_list = ["All"] + sorted(df["rarity"].dropna().unique().tolist())
-        rarity_filter = st.selectbox("Rarità", rarity_list)
+        rarity_filter = st.selectbox(
+            "Rarità",
+            ["All"] + sorted(df["rarity"].dropna().unique().tolist())
+        )
 
 with col2:
     set_filter = "All"
     if "set" in df.columns:
-        set_list = ["All"] + sorted(df["set"].dropna().unique().tolist())
-        set_filter = st.selectbox("Set", set_list)
+        set_filter = st.selectbox(
+            "Set",
+            ["All"] + sorted(df["set"].dropna().unique().tolist())
+        )
 
 with col3:
     search = st.text_input("Ricerca (name / tag)")
 
 # =========================
-# FILTRI COMPLETAMENTO (NUOVI)
+# FILTRI vX COMPLETION
 # =========================
 
 c1, c2, c3 = st.columns(3)
@@ -104,23 +108,12 @@ if set_filter != "All":
 
 if search:
     filtered = filtered[
-        filtered["name"].str.contains(search, case=False, na=False)
-        | filtered["tag"].str.contains(search, case=False, na=False)
+        filtered["name"].str.contains(search, case=False, na=False) |
+        filtered["tag"].str.contains(search, case=False, na=False)
     ]
 
 # =========================
-# COMBINAZIONE COLONNE
-# =========================
-
-def combine(own, maxv):
-    return f"{own} / {maxv}"
-
-filtered["v1"] = filtered.apply(lambda x: combine(x["v1own"], x["v1max"]), axis=1)
-filtered["v2"] = filtered.apply(lambda x: combine(x["v2own"], x["v2max"]), axis=1)
-filtered["v3"] = filtered.apply(lambda x: combine(x["v3own"], x["v3max"]), axis=1)
-
-# =========================
-# LOGIC FILTRI COMPLETAMENTO
+# vX FILTERS
 # =========================
 
 if hide_v1_complete:
@@ -132,55 +125,23 @@ if hide_v2_complete:
 if hide_v3_complete:
     filtered = filtered[filtered["v3own"] != filtered["v3max"]]
 
-# reset index (niente colonna 0)
-filtered = filtered.reset_index(drop=True)
-
 # =========================
-# STYLING CONDIZIONALE
+# DISPLAY (SAFE)
 # =========================
 
-def highlight(row):
-    styles = []
+display_df = filtered[[
+    "set",
+    "tag",
+    "name",
+    "rarity",
+    "v1own",
+    "v1max",
+    "v2own",
+    "v2max",
+    "v3own",
+    "v3max"
+]].reset_index(drop=True)
 
-    # v1
-    if row["v1own"] == row["v1max"]:
-        styles.append("background-color: #d4f8d4")
-    else:
-        styles.append("background-color: #ffe5cc")
+st.write(f"Carte trovate: **{len(display_df)}**")
 
-    # v2
-    if row["v2own"] == row["v2max"]:
-        styles.append("background-color: #d4f8d4")
-    else:
-        styles.append("background-color: #ffe5cc")
-
-    # v3
-    if row["v3own"] == row["v3max"]:
-        styles.append("background-color: #d4f8d4")
-    else:
-        styles.append("background-color: #ffe5cc")
-
-    # colonne extra senza stile
-    extra_cols = len(row) - 3
-    return [""] * extra_cols + styles
-
-# =========================
-# OUTPUT
-# =========================
-
-st.write(f"Carte trovate: **{len(filtered)}**")
-
-# mantieni DF completo per styling
-styled_df = filtered.style.apply(highlight, axis=1)
-
-# poi selezioni solo le colonne da mostrare
-columns_to_show = ["set", "tag", "name", "rarity", "v1", "v2", "v3"]
-styled_df = styled_df.format()
-
-styled_df = filtered[columns_to_show].style.apply(highlight, axis=1)
-
-st.dataframe(
-    styled_df,
-    use_container_width=True,
-    hide_index=True
-)
+st.dataframe(display_df, use_container_width=True, hide_index=True)
