@@ -7,41 +7,38 @@ st.set_page_config(page_title="TCG Vault", layout="wide")
 st.title("🎴 TCG Vault")
 
 # =========================
-# CONFIG (MODIFICA QUI)
+# GIOCHI
 # =========================
 
-JSON_FILES = {
-    "Pokemon": "https://1drv.ms/u/c/506c16037a998404/IQDsiy_Tc6zyRJ7KXo-WFslFAYgu2DGG97DH-px3soh0NpM?e=gvflk6",
-    "One Piece": "https://1drv.ms/u/c/506c16037a998404/IQDsiy_Tc6zyRJ7KXo-WFslFAYgu2DGG97DH-px3soh0NpM?e=gvflk6",
-    "Yu-Gi-Oh": "https://1drv.ms/u/c/506c16037a998404/IQDsiy_Tc6zyRJ7KXo-WFslFAYgu2DGG97DH-px3soh0NpM?e=gvflk6"
+GAMES = {
+    "C - Lorcana JP": "https://raw.githubusercontent.com/CatusDC/TCG_vault/main/data/lorcana_jp.json",
+    "C - Lorcana": "https://raw.githubusercontent.com/CatusDC/TCG_vault/main/data/lorcana.json",
+    "C - Riftbound": "https://raw.githubusercontent.com/CatusDC/TCG_vault/main/data/riftbound.json",
+    "C - Pokemon JP": "https://raw.githubusercontent.com/CatusDC/TCG_vault/main/data/pokemon_jp.json",
+    "P - Lorcana": "https://raw.githubusercontent.com/CatusDC/TCG_vault/main/data/p_lorcana.json",
+    "P - RIftbound": "https://raw.githubusercontent.com/CatusDC/TCG_vault/main/data/p_riftbound.json"
 }
 
 # =========================
-# LOAD JSON
+# LOAD
 # =========================
+
 @st.cache_data
-def load_data(url):
-    try:
-        r = requests.get(url)
-        return r.json()
-    except:
-        return {"cards": []}
+def load_json(url):
+    r = requests.get(url)
+    return r.json()
 
-# =========================
-# HOME
-# =========================
+game = st.sidebar.selectbox("Seleziona gioco", list(GAMES.keys()))
 
-game = st.sidebar.selectbox("Seleziona gioco", list(JSON_FILES.keys()))
-
-data = load_data(JSON_FILES[game])
+data = load_json(GAMES[game])
 cards = data.get("cards", [])
 
 df = pd.DataFrame(cards)
 
-st.subheader(f"📦 {game}")
+st.subheader(game)
 
 if df.empty:
-    st.warning("Nessun dato trovato")
+    st.warning("Nessuna carta trovata")
     st.stop()
 
 # =========================
@@ -51,27 +48,21 @@ if df.empty:
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    rarities = ["All"] + sorted(df["rarity"].dropna().unique().tolist())
-    rarity_filter = st.selectbox("Rarità", rarities)
+    rarity = st.selectbox("Rarità", ["All"] + sorted(df["rarity"].dropna().unique()))
 
 with col2:
-    sets = ["All"] + sorted(df["set"].dropna().unique().tolist())
-    set_filter = st.selectbox("Set", sets)
+    sets = st.selectbox("Set", ["All"] + sorted(df["set"].dropna().unique()))
 
 with col3:
-    search = st.text_input("Ricerca (nome / tag)")
-
-# =========================
-# APPLY FILTERS
-# =========================
+    search = st.text_input("Ricerca")
 
 filtered = df.copy()
 
-if rarity_filter != "All":
-    filtered = filtered[filtered["rarity"] == rarity_filter]
+if rarity != "All":
+    filtered = filtered[filtered["rarity"] == rarity]
 
-if set_filter != "All":
-    filtered = filtered[filtered["set"] == set_filter]
+if sets != "All":
+    filtered = filtered[filtered["set"] == sets]
 
 if search:
     filtered = filtered[
@@ -79,11 +70,7 @@ if search:
         filtered["tag"].str.contains(search, case=False, na=False)
     ]
 
-# =========================
-# DISPLAY
-# =========================
-
-st.write(f"Carte trovate: {len(filtered)}")
+st.write(f"Carte: {len(filtered)}")
 
 st.dataframe(
     filtered[
