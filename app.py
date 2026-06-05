@@ -39,7 +39,7 @@ headers = {
 
 @st.cache_data
 def load_json(file_name):
-    url = f"https://raw.githubusercontent.com/CatusDC/tcg_vault/{file_name}"
+    url = f"https://raw.githubusercontent.com/CatusDC/tcg_vault/main/{file_name}"
 
     r = requests.get(
         url,
