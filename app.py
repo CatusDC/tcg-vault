@@ -39,12 +39,15 @@ headers = {
 
 @st.cache_data
 def load_json(file_name):
-    url = f"https://api.github.com/repos/CatusDC/{REPO}/contents/{file_name}"
+    url = f"https://raw.githubusercontent.com/CatusDC/tcg_vault/main/main/{file_name}"
 
-    r = requests.get(url, headers=headers)
+    r = requests.get(
+        url,
+        headers={"Authorization": f"token {TOKEN}"}
+    )
 
     if r.status_code != 200:
-        st.error(f"Errore GitHub API: {r.status_code}")
+        st.error(r.text)
         st.stop()
 
     data = r.json()
