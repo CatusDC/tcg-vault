@@ -9,12 +9,12 @@ import pandas as pd
 st.set_page_config(page_title="TCG Vault", layout="wide")
 
 GAMES = {
-    "C - Lorcana JP": "c-lorcana-jp.json",
-    "C - Lorcana": "c-lorcana.json",
-    "C - Riftbound": "c-riftbound.json",
-    "C - Pokemon JP": "c-pokemon-jp.json",
+    "C - Lorcana JP": "p-lorcana.json",
+    "C - Lorcana": "p-lorcana.json",
+    "C - Riftbound": "p-lorcana.json",
+    "C - Pokemon JP": "p-lorcana.json",
     "P - Lorcana": "p-lorcana.json",
-    "P - RIftbound": "p-riftbound.json"
+    "P - RIftbound": "p-lorcana.json"
 }
 
 BASE_URL = "https://raw.githubusercontent.com/CatusDC/tcg_vault/main/data/"
@@ -35,6 +35,26 @@ def load_json(file_name):
     return r.json()
 
 # =========================
+# RECAP FUNCTION
+# =========================
+
+def build_recap(df):
+    recap = df.groupby("rarity").agg({
+        "v1own": "sum",
+        "v1max": "sum",
+        "v2own": "sum",
+        "v2max": "sum",
+        "v3own": "sum",
+        "v3max": "sum",
+    }).reset_index()
+
+    recap["v1"] = recap["v1own"].astype(int).astype(str) + " / " + recap["v1max"].astype(int).astype(str)
+    recap["v2"] = recap["v2own"].astype(int).astype(str) + " / " + recap["v2max"].astype(int).astype(str)
+    recap["v3"] = recap["v3own"].astype(int).astype(str) + " / " + recap["v3max"].astype(int).astype(str)
+
+    return recap
+
+# =========================
 # UI
 # =========================
 
@@ -42,6 +62,11 @@ st.title("🎴 TCG Vault")
 
 game = st.sidebar.selectbox("Seleziona gioco", list(GAMES.keys()))
 file_name = GAMES[game]
+
+view_mode = st.sidebar.radio(
+    "Modalità vista",
+    ["Dettaglio carte", "Recap rarità"]
+)
 
 data = load_json(file_name)
 cards = data.get("cards", [])
@@ -55,7 +80,25 @@ if df.empty:
 st.subheader(game)
 
 # =========================
-# FILTRI BASE
+# RECAP MODE
+# =========================
+
+if view_mode == "Recap rarità":
+
+    recap_df = build_recap(df)
+
+    st.write("📊 Totale per rarità")
+
+    st.dataframe(
+        recap_df[["rarity", "v1", "v2", "v3"]],
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.stop()
+
+# =========================
+# DETTAGLIO MODE FILTERS
 # =========================
 
 col1, col2, col3 = st.columns(3)
@@ -78,10 +121,6 @@ with col2:
 
 with col3:
     search = st.text_input("Ricerca (name / tag)")
-
-# =========================
-# FILTRI vX COMPLETION
-# =========================
 
 c1, c2, c3 = st.columns(3)
 
@@ -113,20 +152,20 @@ if search:
     ]
 
 # =========================
-# vX FILTERS
+# vX FILTERS (FIXED)
 # =========================
 
 if hide_v1_complete:
-    filtered = filtered[filtered["v1own"] != filtered["v1max"]]
+    filtered = filtered[~((filtered["v1max"] > 0) & (filtered["v1own"] == filtered["v1max"]))]
 
 if hide_v2_complete:
-    filtered = filtered[filtered["v2own"] != filtered["v2max"]]
+    filtered = filtered[~((filtered["v2max"] > 0) & (filtered["v2own"] == filtered["v2max"]))]
 
 if hide_v3_complete:
-    filtered = filtered[filtered["v3own"] != filtered["v3max"]]
+    filtered = filtered[~((filtered["v3max"] > 0) & (filtered["v3own"] == filtered["v3max"]))]
 
 # =========================
-# COLONNE COMBINATE
+# COMBINED COLUMNS
 # =========================
 
 filtered["v1"] = filtered["v1own"].astype(str) + " / " + filtered["v1max"].astype(str)
@@ -134,7 +173,7 @@ filtered["v2"] = filtered["v2own"].astype(str) + " / " + filtered["v2max"].astyp
 filtered["v3"] = filtered["v3own"].astype(str) + " / " + filtered["v3max"].astype(str)
 
 # =========================
-# OUTPUT (SET NASCOSTA MA USATA PER FILTRI)
+# OUTPUT
 # =========================
 
 display_df = filtered[[
@@ -148,4 +187,8 @@ display_df = filtered[[
 
 st.write(f"Carte trovate: **{len(display_df)}**")
 
-st.dataframe(display_df, use_container_width=True, hide_index=True)
+st.dataframe(
+    display_df,
+    use_container_width=True,
+    hide_index=True
+)
