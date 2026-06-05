@@ -15,7 +15,7 @@ GAMES = {
     "C - Lorcana": "https://raw.githubusercontent.com/CatusDC/TCG_vault/main/data/lorcana.json",
     "C - Riftbound": "https://raw.githubusercontent.com/CatusDC/TCG_vault/main/data/riftbound.json",
     "C - Pokemon JP": "https://raw.githubusercontent.com/CatusDC/TCG_vault/main/data/pokemon_jp.json",
-    "P - Lorcana": "https://raw.githubusercontent.com/CatusDC/TCG_vault/main/data/p-lorcana.json",
+    "P - Lorcana": "https://raw.githubusercontent.com/CatusDC/TCG_vault/main/P - Lorcana.json",
     "P - RIftbound": "https://raw.githubusercontent.com/CatusDC/TCG_vault/main/data/p_riftbound.json"
 }
 
