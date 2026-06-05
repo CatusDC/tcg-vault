@@ -22,16 +22,6 @@ GAMES = {
 REPO = "tcg_vault"
 BASE_PATH = "main"   # <-- come richiesto
 
-# =========================
-# GITHUB AUTH
-# =========================
-
-TOKEN = st.secrets["GITHUB_TOKEN"]
-
-headers = {
-    "Authorization": f"token {TOKEN}",
-    "Accept": "application/vnd.github.v3+json"
-}
 
 # =========================
 # LOAD JSON FROM PRIVATE REPO
@@ -42,8 +32,7 @@ def load_json(file_name):
     url = f"https://raw.githubusercontent.com/CatusDC/tcg_vault/data/p-lorcana.json"
 
     r = requests.get(
-        url,
-        headers={"Authorization": f"token {TOKEN}"}
+        url
     )
 
     if r.status_code != 200:
