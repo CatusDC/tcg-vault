@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import plotly.graph_objects as go
 
 # =========================
 # CONFIG
@@ -22,16 +23,11 @@ def load_data():
         st.error(f"Errore caricamento JSON: {r.status_code}")
         st.stop()
 
-    try:
-        return r.json()
-    except Exception:
-        st.error("JSON non valido o corrotto")
-        st.stop()
+    return r.json()
 
 
 data = load_data()
 cards = data.get("cards", [])
-
 df = pd.DataFrame(cards)
 
 if df.empty:
@@ -39,44 +35,103 @@ if df.empty:
     st.stop()
 
 # =========================
-# GAME SELECTION
+# PROGRESS CIRCLE
+# =========================
+
+def progress_circle(title, value, total):
+    pct = 0 if total == 0 else value / total * 100
+
+    fig = go.Figure(go.Pie(
+        values=[pct, 100 - pct],
+        hole=0.72,
+        marker_colors=["#4cd97b", "#2a2a2a"],
+        textinfo="none"
+    ))
+
+    fig.update_layout(
+        showlegend=False,
+        margin=dict(l=0, r=0, t=0, b=0),
+        annotations=[
+            dict(
+                text=f"{title}<br><b>{pct:06.2f}%</b>",
+                x=0.5,
+                y=0.5,
+                font_size=14,
+                showarrow=False,
+                align="center"
+            )
+        ],
+        height=220,
+        width=220
+    )
+
+    return fig
+
+# =========================
+# GAME LIST
 # =========================
 
 games = sorted(df["game"].dropna().unique().tolist())
-selected_game = st.sidebar.selectbox("🎮 Gioco", games)
-
-df = df[df["game"] == selected_game].copy()
-
-st.title(f"🎴 TCG Vault - {selected_game}")
 
 # =========================
-# TABS DASHBOARD
+# TABS
 # =========================
 
-tab1, tab2 = st.tabs(["📋 Collezione", "📊 Recap"])
+home_tab, col_tab, recap_tab, set_tab = st.tabs(
+    ["🏠 Home", "📋 Collection", "📊 Recap", "📦 Set Tracker"]
+)
 
-# =========================
-# TAB 1 - COLLECTION
-# =========================
+# =========================================================
+# 🏠 HOME
+# =========================================================
 
-with tab1:
+with home_tab:
 
-    # -------------------------
-    # FILTERS
-    # -------------------------
+    st.title("🎴 TCG Vault Dashboard")
+    st.subheader("Panoramica collezioni")
 
+    home_df = df.copy()
+
+    game_stats = home_df.groupby("game").agg(
+        owned=("v1own", "sum"),
+        total=("v1max", "sum")
+    ).reset_index()
+
+    cols = st.columns(len(game_stats))
+
+    for i, row in game_stats.iterrows():
+        with cols[i]:
+            fig = progress_circle(
+                row["game"],
+                row["owned"],
+                row["total"]
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+# =========================================================
+# 📋 COLLECTION
+# =========================================================
+
+with col_tab:
+
+    selected_game = st.sidebar.selectbox("🎮 Gioco", games)
+    df_game = df[df["game"] == selected_game].copy()
+
+    st.title(f"📋 Collection - {selected_game}")
+
+    # filters
     col1, col2, col3 = st.columns(3)
 
     with col1:
         rarity_filter = st.selectbox(
             "Rarità",
-            ["All"] + sorted(df["rarity"].dropna().unique().tolist())
+            ["All"] + sorted(df_game["rarity"].dropna().unique().tolist())
         )
 
     with col2:
         set_filter = st.selectbox(
             "Set",
-            ["All"] + sorted(df["set"].dropna().unique().tolist())
+            ["All"] + sorted(df_game["set"].dropna().unique().tolist())
         )
 
     with col3:
@@ -93,11 +148,7 @@ with tab1:
     with c3:
         hide_v3 = st.checkbox("Nascondi v3 completate")
 
-    # -------------------------
-    # FILTER LOGIC
-    # -------------------------
-
-    filtered = df.copy()
+    filtered = df_game.copy()
 
     if rarity_filter != "All":
         filtered = filtered[filtered["rarity"] == rarity_filter]
@@ -111,7 +162,6 @@ with tab1:
             filtered["tag"].str.contains(search, case=False, na=False)
         ]
 
-    # safe completion filters (gestisce vmax=0)
     if hide_v1:
         filtered = filtered[~((filtered["v1max"] > 0) & (filtered["v1own"] == filtered["v1max"]))]
 
@@ -121,53 +171,68 @@ with tab1:
     if hide_v3:
         filtered = filtered[~((filtered["v3max"] > 0) & (filtered["v3own"] == filtered["v3max"]))]
 
-    # -------------------------
-    # DISPLAY COLUMNS
-    # -------------------------
-
     filtered["v1"] = filtered["v1own"].astype(str) + " / " + filtered["v1max"].astype(str)
     filtered["v2"] = filtered["v2own"].astype(str) + " / " + filtered["v2max"].astype(str)
     filtered["v3"] = filtered["v3own"].astype(str) + " / " + filtered["v3max"].astype(str)
 
-    display_df = filtered[[
-        "set",
-        "tag",
-        "name",
-        "rarity",
-        "v1",
-        "v2",
-        "v3"
-    ]].reset_index(drop=True)
+    st.dataframe(
+        filtered[["set", "tag", "name", "rarity", "v1", "v2", "v3"]],
+        use_container_width=True,
+        hide_index=True
+    )
 
-    st.write(f"Carte trovate: **{len(display_df)}**")
+# =========================================================
+# 📊 RECAP RARITY
+# =========================================================
 
-    st.dataframe(display_df, use_container_width=True, hide_index=True)
+with recap_tab:
 
-# =========================
-# TAB 2 - RECAP
-# =========================
+    selected_game = st.sidebar.selectbox("🎮 Gioco (Recap)", games, key="recap_game")
+    df_game = df[df["game"] == selected_game]
 
-with tab2:
+    st.title("📊 Recap Rarità")
 
-    st.subheader("📊 Recap per rarità")
-
-    recap = df.copy()
-
-    summary = recap.groupby("rarity").agg(
-        total_v1=("v1own", "sum"),
-        max_v1=("v1max", "sum"),
-        total_v2=("v2own", "sum"),
-        max_v2=("v2max", "sum"),
-        total_v3=("v3own", "sum"),
-        max_v3=("v3max", "sum"),
+    recap = df_game.groupby("rarity").agg(
+        v1_owned=("v1own", "sum"),
+        v1_max=("v1max", "sum"),
+        v2_owned=("v2own", "sum"),
+        v2_max=("v2max", "sum"),
+        v3_owned=("v3own", "sum"),
+        v3_max=("v3max", "sum"),
     ).reset_index()
 
-    summary["v1"] = summary["total_v1"].astype(str) + " / " + summary["max_v1"].astype(str)
-    summary["v2"] = summary["total_v2"].astype(str) + " / " + summary["max_v2"].astype(str)
-    summary["v3"] = summary["total_v3"].astype(str) + " / " + summary["max_v3"].astype(str)
+    recap["v1"] = recap["v1_owned"].astype(str) + " / " + recap["v1_max"].astype(str)
+    recap["v2"] = recap["v2_owned"].astype(str) + " / " + recap["v2_max"].astype(str)
+    recap["v3"] = recap["v3_owned"].astype(str) + " / " + recap["v3_max"].astype(str)
 
     st.dataframe(
-        summary[["rarity", "v1", "v2", "v3"]],
+        recap[["rarity", "v1", "v2", "v3"]],
+        use_container_width=True,
+        hide_index=True
+    )
+
+# =========================================================
+# 📦 SET TRACKER
+# =========================================================
+
+with set_tab:
+
+    selected_game = st.sidebar.selectbox("🎮 Gioco (Set Tracker)", games, key="set_game")
+    df_game = df[df["game"] == selected_game]
+
+    st.title("📦 Set Completion Tracker")
+
+    set_stats = df_game.groupby("set").agg(
+        owned=("v1own", "sum"),
+        total=("v1max", "sum")
+    ).reset_index()
+
+    set_stats["pct"] = set_stats["owned"] / set_stats["total"].replace(0, 1) * 100
+
+    set_stats = set_stats.sort_values("pct", ascending=False)
+
+    st.dataframe(
+        set_stats[["set", "owned", "total", "pct"]],
         use_container_width=True,
         hide_index=True
     )
