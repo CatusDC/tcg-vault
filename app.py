@@ -37,6 +37,9 @@ if "game" not in st.session_state:
 def select_game(game):
     st.session_state.game = game
 
+def go_home():
+    st.session_state.game = None
+
 # =========================
 # FILTER DATA
 # =========================
@@ -48,21 +51,14 @@ def get_game_df():
 
 df_game = get_game_df()
 
-# =========================
-# TABS
-# =========================
-
-home_tab, col_tab, recap_tab, set_tab = st.tabs(
-    ["🏠 Home", "📋 Collection", "📊 Recap", "📦 Set Tracker"]
-)
-
 # =========================================================
-# 🏠 HOME HUB (LIGHT VERSION)
+# 🏠 HOME (ONLY GAME SELECTOR)
 # =========================================================
 
-with home_tab:
+if st.session_state.game is None:
 
     st.title("🎴 TCG Vault")
+
     st.subheader("Seleziona un gioco")
 
     stats = df.groupby("game").agg(
@@ -92,119 +88,121 @@ with home_tab:
                 args=(row["game"],)
             )
 
-        if (i + 1) % 3 == 0:
-            cols = st.columns(3)
-
-    if st.session_state.game:
-        st.success(f"Gioco selezionato: {st.session_state.game}")
-
 # =========================================================
-# 📋 COLLECTION
+# 🎮 GAME VIEW (ONLY IF GAME SELECTED)
 # =========================================================
 
-with col_tab:
+else:
 
-    st.title("📋 Collection")
+    st.title(f"🎮 {st.session_state.game}")
 
-    if df_game is None:
-        st.warning("Seleziona un gioco dalla Home")
-        st.stop()
+    st.button("🏠 Home", on_click=go_home)
 
-    col1, col2, col3 = st.columns(3)
+    df_game = get_game_df()
 
-    with col1:
-        rarity_filter = st.selectbox(
-            "Rarità",
-            ["All"] + sorted(df_game["rarity"].dropna().unique().tolist())
+    # =========================
+    # TABS
+    # =========================
+
+    tab1, tab2, tab3 = st.tabs(
+        ["📋 Collection", "📊 Recap", "📦 Set Tracker"]
+    )
+
+    # =====================================================
+    # 📋 COLLECTION
+    # =====================================================
+
+    with tab1:
+
+        st.subheader("Collection")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            rarity_filter = st.selectbox(
+                "Rarità",
+                ["All"] + sorted(df_game["rarity"].dropna().unique().tolist())
+            )
+
+        with col2:
+            set_filter = st.selectbox(
+                "Set",
+                ["All"] + sorted(df_game["set"].dropna().unique().tolist())
+            )
+
+        with col3:
+            search = st.text_input("Ricerca")
+
+        filtered = df_game.copy()
+
+        if rarity_filter != "All":
+            filtered = filtered[filtered["rarity"] == rarity_filter]
+
+        if set_filter != "All":
+            filtered = filtered[filtered["set"] == set_filter]
+
+        if search:
+            filtered = filtered[
+                filtered["name"].str.contains(search, case=False, na=False) |
+                filtered["tag"].str.contains(search, case=False, na=False)
+            ]
+
+        filtered["v1"] = filtered["v1own"].astype(str) + " / " + filtered["v1max"].astype(str)
+        filtered["v2"] = filtered["v2own"].astype(str) + " / " + filtered["v2max"].astype(str)
+        filtered["v3"] = filtered["v3own"].astype(str) + " / " + filtered["v3max"].astype(str)
+
+        st.dataframe(
+            filtered[["set", "tag", "name", "rarity", "v1", "v2", "v3"]],
+            use_container_width=True,
+            hide_index=True
         )
 
-    with col2:
-        set_filter = st.selectbox(
-            "Set",
-            ["All"] + sorted(df_game["set"].dropna().unique().tolist())
+    # =====================================================
+    # 📊 RECAP
+    # =====================================================
+
+    with tab2:
+
+        st.subheader("Recap Rarità")
+
+        recap = df_game.groupby("rarity").agg(
+            v1_owned=("v1own", "sum"),
+            v1_max=("v1max", "sum"),
+            v2_owned=("v2own", "sum"),
+            v2_max=("v2max", "sum"),
+            v3_owned=("v3own", "sum"),
+            v3_max=("v3max", "sum"),
+        ).reset_index()
+
+        recap["v1"] = recap["v1_owned"].astype(str) + " / " + recap["v1_max"].astype(str)
+        recap["v2"] = recap["v2_owned"].astype(str) + " / " + recap["v2_max"].astype(str)
+        recap["v3"] = recap["v3_owned"].astype(str) + " / " + recap["v3_max"].astype(str)
+
+        st.dataframe(
+            recap[["rarity", "v1", "v2", "v3"]],
+            use_container_width=True,
+            hide_index=True
         )
 
-    with col3:
-        search = st.text_input("Ricerca")
+    # =====================================================
+    # 📦 SET TRACKER
+    # =====================================================
 
-    filtered = df_game.copy()
+    with tab3:
 
-    if rarity_filter != "All":
-        filtered = filtered[filtered["rarity"] == rarity_filter]
+        st.subheader("Set Tracker")
 
-    if set_filter != "All":
-        filtered = filtered[filtered["set"] == set_filter]
+        set_stats = df_game.groupby("set").agg(
+            owned=("v1own", "sum"),
+            total=("v1max", "sum")
+        ).reset_index()
 
-    if search:
-        filtered = filtered[
-            filtered["name"].str.contains(search, case=False, na=False) |
-            filtered["tag"].str.contains(search, case=False, na=False)
-        ]
+        set_stats["pct"] = set_stats["owned"] / set_stats["total"].replace(0, 1) * 100
 
-    filtered["v1"] = filtered["v1own"].astype(str) + " / " + filtered["v1max"].astype(str)
-    filtered["v2"] = filtered["v2own"].astype(str) + " / " + filtered["v2max"].astype(str)
-    filtered["v3"] = filtered["v3own"].astype(str) + " / " + filtered["v3max"].astype(str)
+        set_stats = set_stats.sort_values("pct", ascending=False)
 
-    st.dataframe(
-        filtered[["set", "tag", "name", "rarity", "v1", "v2", "v3"]],
-        use_container_width=True,
-        hide_index=True
-    )
-
-# =========================================================
-# 📊 RECAP
-# =========================================================
-
-with recap_tab:
-
-    st.title("📊 Recap Rarità")
-
-    if df_game is None:
-        st.warning("Seleziona un gioco dalla Home")
-        st.stop()
-
-    recap = df_game.groupby("rarity").agg(
-        v1_owned=("v1own", "sum"),
-        v1_max=("v1max", "sum"),
-        v2_owned=("v2own", "sum"),
-        v2_max=("v2max", "sum"),
-        v3_owned=("v3own", "sum"),
-        v3_max=("v3max", "sum"),
-    ).reset_index()
-
-    recap["v1"] = recap["v1_owned"].astype(str) + " / " + recap["v1_max"].astype(str)
-    recap["v2"] = recap["v2_owned"].astype(str) + " / " + recap["v2_max"].astype(str)
-    recap["v3"] = recap["v3_owned"].astype(str) + " / " + recap["v3_max"].astype(str)
-
-    st.dataframe(
-        recap[["rarity", "v1", "v2", "v3"]],
-        use_container_width=True,
-        hide_index=True
-    )
-
-# =========================================================
-# 📦 SET TRACKER
-# =========================================================
-
-with set_tab:
-
-    st.title("📦 Set Tracker")
-
-    if df_game is None:
-        st.warning("Seleziona un gioco dalla Home")
-        st.stop()
-
-    set_stats = df_game.groupby("set").agg(
-        owned=("v1own", "sum"),
-        total=("v1max", "sum")
-    ).reset_index()
-
-    set_stats["pct"] = set_stats["owned"] / set_stats["total"].replace(0, 1) * 100
-
-    set_stats = set_stats.sort_values("pct", ascending=False)
-
-    st.dataframe(
-        set_stats[["set", "owned", "total", "pct"]],
-        use_container_width=True,
-        hide_index=True
-    )
+        st.dataframe(
+            set_stats[["set", "owned", "total", "pct"]],
+            use_container_width=True,
+            hide_index=True
+        )
