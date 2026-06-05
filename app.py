@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-import base64
 import json
 import pandas as pd
 
@@ -12,54 +11,48 @@ st.set_page_config(page_title="TCG Vault", layout="wide")
 
 GAMES = {
     "C - Lorcana JP": "p-lorcana.json",
-    "C - Lorcana": "lorcana.json",
-    "C - Riftbound": "riftbound.json",
-    "C - Pokemon JP": "pokemon_jp.json",
+    "C - Lorcana": "p-lorcana.json",
+    "C - Riftbound": "p-lorcana.json",
+    "C - Pokemon JP": "p-lorcana.json",
     "P - Lorcana": "p-lorcana.json",
-    "P - RIftbound": "p-riftbound.json"
+    "P - RIftbound": "p-lorcana.json"
 }
 
-REPO = "tcg_vault"
-BASE_PATH = "main"   # <-- come richiesto
-
+BASE_URL = "https://raw.githubusercontent.com/CatusDC/tcg_vault/main/data/"
 
 # =========================
-# LOAD JSON FROM PRIVATE REPO
+# LOAD JSON (RAW)
 # =========================
 
 @st.cache_data
 def load_json(file_name):
-    url = f"https://raw.githubusercontent.com/CatusDC/tcg_vault/data/p-lorcana.json"
+    url = BASE_URL + file_name
 
-    r = requests.get(
-        url
-    )
+    r = requests.get(url)
 
     if r.status_code != 200:
-        st.error(r.text)
+        st.error(f"Errore HTTP: {r.status_code}")
         st.stop()
 
-    data = r.json()
-
-    if "content" not in data:
-        st.error("File non valido o vuoto")
+    try:
+        return r.json()
+    except Exception as e:
+        st.error("JSON non valido o non parsabile")
+        st.write("Debug raw response (prime 300 char):")
+        st.code(r.text[:300])
         st.stop()
-
-    decoded = base64.b64decode(data["content"]).decode("utf-8")
-
-    return json.loads(decoded)
 
 # =========================
-# UI - HOME
+# UI
 # =========================
 
 st.title("🎴 TCG Vault")
 
 game = st.sidebar.selectbox("Seleziona gioco", list(GAMES.keys()))
 
-file_path = GAMES[game]
+file_name = GAMES[game]
 
-data = load_json(file_path)
+data = load_json(file_name)
 
 cards = data.get("cards", [])
 
@@ -109,8 +102,8 @@ if set_filter != "All" and "set" in df.columns:
 if search:
     if "name" in df.columns:
         filtered = filtered[
-            filtered["name"].str.contains(search, case=False, na=False)
-            | filtered["tag"].str.contains(search, case=False, na=False)
+            df["name"].str.contains(search, case=False, na=False)
+            | df["tag"].str.contains(search, case=False, na=False)
         ]
 
 # =========================
