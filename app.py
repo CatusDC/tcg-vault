@@ -39,7 +39,7 @@ headers = {
 
 @st.cache_data
 def load_json(file_name):
-    url = f"https://api.github.com/repos/CatusDC/{REPO}/contents/{BASE_PATH}/{file_name}"
+    url = f"https://api.github.com/repos/CatusDC/{REPO}/contents/{file_name}"
 
     r = requests.get(url, headers=headers)
 
