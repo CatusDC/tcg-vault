@@ -9,12 +9,12 @@ import pandas as pd
 st.set_page_config(page_title="TCG Vault", layout="wide")
 
 GAMES = {
-    "C - Lorcana JP": "p-lorcana.json",
-    "C - Lorcana": "p-lorcana.json",
-    "C - Riftbound": "p-lorcana.json",
-    "C - Pokemon JP": "p-lorcana.json",
+    "C - Lorcana JP": "c-lorcana-jp.json",
+    "C - Lorcana": "c-lorcana.json",
+    "C - Riftbound": "c-riftbound.json",
+    "C - Pokemon JP": "c-pokemon-jp.json",
     "P - Lorcana": "p-lorcana.json",
-    "P - RIftbound": "p-lorcana.json"
+    "P - RIftbound": "p-riftbound.json"
 }
 
 BASE_URL = "https://raw.githubusercontent.com/CatusDC/tcg_vault/main/data/"
