@@ -28,7 +28,7 @@ df = pd.DataFrame(data.get("cards", []))
 games = sorted(df["game"].dropna().unique().tolist())
 
 # =========================
-# SESSION STATE (GAME SELECTED)
+# SESSION STATE
 # =========================
 
 if "game" not in st.session_state:
@@ -36,6 +36,17 @@ if "game" not in st.session_state:
 
 def select_game(game):
     st.session_state.game = game
+
+# =========================
+# FILTER DATA
+# =========================
+
+def get_game_df():
+    if not st.session_state.game:
+        return None
+    return df[df["game"] == st.session_state.game].copy()
+
+df_game = get_game_df()
 
 # =========================
 # TABS
@@ -46,7 +57,7 @@ home_tab, col_tab, recap_tab, set_tab = st.tabs(
 )
 
 # =========================================================
-# 🏠 HOME (GAME HUB)
+# 🏠 HOME HUB (LIGHT VERSION)
 # =========================================================
 
 with home_tab:
@@ -54,36 +65,37 @@ with home_tab:
     st.title("🎴 TCG Vault")
     st.subheader("Seleziona un gioco")
 
+    stats = df.groupby("game").agg(
+        owned=("v1own", "sum"),
+        total=("v1max", "sum")
+    ).reset_index()
+
     cols = st.columns(3)
 
-    for i, game in enumerate(games):
+    for i, row in stats.iterrows():
+
+        pct = 0 if row["total"] == 0 else row["owned"] / row["total"]
 
         with cols[i % 3]:
 
-            is_selected = st.session_state.game == game
+            st.markdown(f"### {row['game']}")
 
-            label = "✅ " + game if is_selected else game
+            st.progress(pct)
+
+            st.caption(f"{pct*100:05.2f}% completato")
 
             st.button(
-                label,
+                "Apri",
                 use_container_width=True,
                 on_click=select_game,
-                args=(game,)
+                args=(row["game"],)
             )
 
+        if (i + 1) % 3 == 0:
+            cols = st.columns(3)
+
     if st.session_state.game:
-        st.info(f"Gioco selezionato: **{st.session_state.game}**")
-
-# =========================================================
-# FILTERED DATA
-# =========================================================
-
-def get_game_df():
-    if not st.session_state.game:
-        return None
-    return df[df["game"] == st.session_state.game].copy()
-
-df_game = get_game_df()
+        st.success(f"Gioco selezionato: {st.session_state.game}")
 
 # =========================================================
 # 📋 COLLECTION
@@ -94,7 +106,7 @@ with col_tab:
     st.title("📋 Collection")
 
     if df_game is None:
-        st.warning("Seleziona prima un gioco nella Home")
+        st.warning("Seleziona un gioco dalla Home")
         st.stop()
 
     col1, col2, col3 = st.columns(3)
@@ -147,7 +159,7 @@ with recap_tab:
     st.title("📊 Recap Rarità")
 
     if df_game is None:
-        st.warning("Seleziona prima un gioco nella Home")
+        st.warning("Seleziona un gioco dalla Home")
         st.stop()
 
     recap = df_game.groupby("rarity").agg(
@@ -178,7 +190,7 @@ with set_tab:
     st.title("📦 Set Tracker")
 
     if df_game is None:
-        st.warning("Seleziona prima un gioco nella Home")
+        st.warning("Seleziona un gioco dalla Home")
         st.stop()
 
     set_stats = df_game.groupby("set").agg(
