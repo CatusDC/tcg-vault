@@ -8,7 +8,7 @@ import pandas as pd
 
 st.set_page_config(page_title="TCG Vault", layout="wide")
 
-DATA_URL = "https://raw.githubusercontent.com/CatusDC/tcg_vault/main/data/miss/collection.json"
+DATA_URL = "https://raw.githubusercontent.com/CatusDC/tcg_vault/main/data/collection.json"
 
 # =========================
 # LOAD DATA
