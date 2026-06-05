@@ -43,6 +43,8 @@ st.title("🎴 TCG Vault")
 game = st.sidebar.selectbox("Seleziona gioco", list(GAMES.keys()))
 file_name = GAMES[game]
 
+st.set_page_config(page_title=GAMES[game], layout="wide")
+
 data = load_json(file_name)
 cards = data.get("cards", [])
 
