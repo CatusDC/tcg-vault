@@ -1,0 +1,63 @@
+body{
+    background:#121212;
+    color:white;
+    font-family:Arial,sans-serif;
+    margin:20px;
+}
+
+.hidden{
+    display:none;
+}
+
+h1,h2{
+    text-align:center;
+}
+
+.gameCard{
+    background:#1f1f1f;
+    border-radius:12px;
+    padding:15px;
+    margin-bottom:15px;
+}
+
+.progressBar{
+    background:#333;
+    border-radius:8px;
+    overflow:hidden;
+    height:18px;
+}
+
+.progressFill{
+    background:#4caf50;
+    height:100%;
+}
+
+button{
+    padding:10px 16px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.filters{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+input,select{
+    padding:8px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,td{
+    border-bottom:1px solid #333;
+    padding:8px;
+    text-align:left;
+    font-size:14px;
+}
