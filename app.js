@@ -3,15 +3,42 @@ document.addEventListener("DOMContentLoaded", () => {
 let allCards = [];
 let currentGame = "";
 
-fetch("https://catusdc.github.io/tcg_vault/collection.json")
-.then(r => r.json())
-.then(data => {
+//---------------------------------
+    //ORIGINAL FETCH
+//fetch("https://catusdc.github.io/tcg_vault/collection.json")
+//.then(r => r.json())
+//.then(data => {
 
-    allCards = data.cards;
-    buildHome();
+   //allCards = data.cards;
+   //buildHome();
 
-});
+//});
 
+    //TEMP FETCH
+fetch("collection.json")
+  .then(async (r) => {
+      console.log("STATUS:", r.status);
+      console.log("CONTENT-TYPE:", r.headers.get("content-type"));
+
+      const text = await r.text();
+
+      console.log("RAW FIRST 300 CHARS:");
+      console.log(text.slice(0, 300));
+
+      console.log("CHAR CODE FIRST 10 BYTES:");
+      console.log([...text.slice(0,10)].map(c => c.charCodeAt(0)));
+
+      return JSON.parse(text);
+  })
+  .then(data => {
+      console.log("JSON OK", data);
+  })
+  .catch(err => {
+      console.error("FETCH ERROR", err);
+  });
+//---------------------------------
+
+    
 function buildHome(){
     const container = document.getElementById("gameCards");
     container.innerHTML = "";
