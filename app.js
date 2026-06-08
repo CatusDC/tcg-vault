@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
 let allCards = [];
 let currentGame = "";
 
-fetch("./collection.json")
+fetch("https://catusdc.github.io/tcg_vault/collection.json")
 .then(r => r.json())
 .then(data => {
 
