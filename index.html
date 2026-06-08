@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCG Vault</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="homePage">
+    <h1>🎴 TCG Vault</h1>
+    <div id="gameCards"></div>
+</div>
+
+<div id="collectionPage" class="hidden">
+
+    <button id="homeButton">← Home</button>
+
+    <h2 id="gameTitle"></h2>
+
+    <div class="filters">
+
+        <input type="text" id="searchBox" placeholder="Ricerca nome o tag">
+
+        <select id="rarityFilter">
+            <option value="All">Rarità: All</option>
+        </select>
+
+        <select id="setFilter">
+            <option value="All">Set: All</option>
+        </select>
+
+    </div>
+
+    <div class="filters">
+
+        <label>
+            <input type="checkbox" id="hideV1">
+            Nascondi V1 complete
+        </label>
+
+        <label>
+            <input type="checkbox" id="hideV2">
+            Nascondi V2 complete
+        </label>
+
+        <label>
+            <input type="checkbox" id="hideV3">
+            Nascondi V3 complete
+        </label>
+
+    </div>
+
+    <div id="tableContainer"></div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
