@@ -6,11 +6,10 @@
     <title>TCG Vault</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <!-- =========================
-     HOME PAGE
+     HOME
 ========================= -->
 <div id="homePage">
 
@@ -21,58 +20,36 @@
 </div>
 
 <!-- =========================
-     COLLECTION PAGE
+     COLLECTION
 ========================= -->
 <div id="collectionPage" class="hidden">
 
-    <header class="topBar">
-        <button id="homeButton">← Home</button>
-        <h2 id="gameTitle"></h2>
-    </header>
+    <button id="homeButton">← Home</button>
+
+    <h2 id="gameTitle"></h2>
 
     <!-- FILTERS -->
     <div class="filters">
 
-        <input type="text" id="searchBox" placeholder="Ricerca nome o tag">
+        <input type="text" id="searchBox" placeholder="Search name / tag">
 
-        <select id="rarityFilter">
-            <option value="All">Rarità: All</option>
-        </select>
-
-        <select id="setFilter">
-            <option value="All">Set: All</option>
-        </select>
+        <div id="rarityFilter" class="chipGroup"></div>
+        <div id="setFilter" class="chipGroup"></div>
 
     </div>
 
-    <!-- V1 / V2 / V3 FILTERS -->
     <div class="filters">
 
-        <label>
-            <input type="checkbox" id="hideV1">
-            Nascondi V1 complete
-        </label>
-
-        <label>
-            <input type="checkbox" id="hideV2">
-            Nascondi V2 complete
-        </label>
-
-        <label>
-            <input type="checkbox" id="hideV3">
-            Nascondi V3 complete
-        </label>
+        <label><input type="checkbox" id="hideV1"> Hide V1 complete</label>
+        <label><input type="checkbox" id="hideV2"> Hide V2 complete</label>
+        <label><input type="checkbox" id="hideV3"> Hide V3 complete</label>
 
     </div>
 
-    <!-- TABLE -->
-    <div id="tableContainer"></div>
+    <div id="tableContainer" class="tableWrapper"></div>
 
 </div>
 
-<!-- =========================
-     SCRIPT
-========================= -->
 <script src="app.js"></script>
 
 </body>
