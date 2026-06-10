@@ -1,3 +1,7 @@
+/* =========================
+   TCG Vault - FINAL STABLE THEME
+   ========================= */
+
 :root {
 
     --bg-main: #0D1A63;
@@ -15,23 +19,42 @@
     --progress-fill: #F68048;
 }
 
+/* =========================
+   GLOBAL
+   ========================= */
+
 body {
     margin: 0;
-    font-family: Arial;
+    font-family: Arial, Helvetica, sans-serif;
     background: var(--bg-main);
     color: var(--text-main);
 }
 
-.hidden {
-    display: none;
+/* IMPORTANT: prevents layout bleed */
+* {
+    box-sizing: border-box;
 }
 
-/* HOME */
+/* =========================
+   PAGE CONTROL
+   ========================= */
+
+.hidden {
+    display: none !important;
+}
+
+/* =========================
+   HOME
+   ========================= */
+
+#homePage {
+    padding: 20px;
+}
+
 #gameCards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
-    padding: 20px;
 }
 
 .gameCard {
@@ -39,18 +62,24 @@ body {
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 16px;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 
-/* PROGRESS */
+/* progress block home */
 .progressBlock {
     display: flex;
     flex-direction: column;
     gap: 6px;
     margin: 10px 0;
     color: var(--text-secondary);
+    font-size: 14px;
 }
 
-/* BUTTON */
+/* =========================
+   BUTTONS
+   ========================= */
+
 button {
     background: var(--bg-accent);
     border: none;
@@ -58,25 +87,78 @@ button {
     padding: 10px 14px;
     border-radius: 10px;
     cursor: pointer;
+    transition: 0.2s;
 }
 
-/* FILTERS */
-.filters {
+button:hover {
+    background: var(--accent);
+}
+
+/* =========================
+   COLLECTION PAGE
+   ========================= */
+
+#collectionPage {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* =========================
+   STICKY FILTER PANEL
+   (ONLY COLLECTION)
+   ========================= */
+
+#filtersPanel {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    background: var(--bg-main);
+    border-bottom: 1px solid var(--border);
+
+    padding: 12px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* each row inside filters */
+.filterRow {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    padding: 10px;
 }
+
+/* search input full width feel */
+.filterRow input {
+    width: 100%;
+    max-width: 500px;
+}
+
+/* checkbox row */
+.checkboxRow {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* =========================
+   INPUTS
+   ========================= */
 
 input, select {
     padding: 8px;
     border-radius: 8px;
     border: 1px solid var(--border);
     background: var(--bg-card);
-    color: white;
+    color: var(--text-main);
 }
 
-/* CHIPS */
+/* =========================
+   CHIPS (SET / RARITY)
+   ========================= */
+
 .chipGroup {
     display: flex;
     flex-wrap: wrap;
@@ -90,6 +172,7 @@ input, select {
     background: var(--bg-card);
     color: var(--text-secondary);
     cursor: pointer;
+    transition: 0.2s;
 }
 
 .chip.active {
@@ -97,10 +180,14 @@ input, select {
     color: white;
 }
 
-/* TABLE */
+/* =========================
+   TABLE
+   ========================= */
+
 .tableWrapper {
     overflow-x: auto;
     padding: 10px;
+    flex: 1;
 }
 
 table {
@@ -113,49 +200,33 @@ th {
     background: var(--bg-card);
     position: sticky;
     top: 0;
+    z-index: 1;
 }
 
 td, th {
     padding: 10px;
     border-bottom: 1px solid var(--border);
 }
-#filtersPanel {
-    position: sticky;
-    top: 0;
-    z-index: 100;
 
-    background: var(--bg-main);
-
-    padding: 12px;
-
-    border-bottom: 1px solid var(--border);
-
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+tr:nth-child(even) {
+    background: rgba(255,255,255,0.03);
 }
 
-/* ogni riga separata */
-.filterRow {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
+/* =========================
+   RESPONSIVE
+   ========================= */
 
-/* search full width feel */
-.filterRow input {
-    width: 100%;
-    max-width: 500px;
-}
+@media (max-width: 600px) {
 
-/* checkbox row più compatta */
-.checkboxRow {
-    font-size: 13px;
-    color: var(--text-secondary);
-}
+    #gameCards {
+        grid-template-columns: 1fr;
+    }
 
-/* evita “saltelli” quando scrolla */
-#collectionPage {
-    display: flex;
-    flex-direction: column;
+    .filterRow input {
+        max-width: 100%;
+    }
+
+    table {
+        min-width: 500px;
+    }
 }
