@@ -3,6 +3,17 @@ document.addEventListener("DOMContentLoaded", () => {
 let allCards = [];
 let currentGame = "";
 
+function calcPercent(own, max) {
+    if (!max || max === 0) return "N/A";
+    return ((own / max) * 100).toFixed(2) + "%";
+}
+
+function safeRatio(own, max) {
+    if (!max || max === 0) return "N/A";
+    return `${own} / ${max}`;
+}
+
+   
 fetch("./collection.json")
 .then(r => r.json())
 .then(data => {
@@ -31,7 +42,19 @@ function buildHome(){
             max += c.v1max + c.v2max + c.v3max;
         });
 
-        const percent = max ? (100 * own / max).toFixed(2) : 0;
+        let v1own = 0, v1max = 0;
+        let v2own = 0, v2max = 0;
+        let v3own = 0, v3max = 0;
+      
+        cards.forEach(c => {
+            v1own += c.v1own; v1max += c.v1max;
+            v2own += c.v2own; v2max += c.v2max;
+            v3own += c.v3own; v3max += c.v3max;
+        });
+      
+        const v1 = calcPercent(v1own, v1max);
+        const v2 = calcPercent(v2own, v2max);
+        const v3 = calcPercent(v3own, v3max);
 
         container.innerHTML += `
         <div class="gameCard">
