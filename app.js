@@ -59,13 +59,11 @@ function buildHome(){
         container.innerHTML += `
         <div class="gameCard">
             <h3>${game}</h3>
-
-            <div class="progressBar">
-                <div class="progressFill" style="width:${percent}%"></div>
-            </div>
-
-            <p>${percent}%</p>
-
+        
+            <p>V1: ${v1}</p>
+            <p>V2: ${v2}</p>
+            <p>V3: ${v3}</p>
+        
             <button onclick="openGame('${game}')">Apri</button>
         </div>`;
     });
@@ -149,9 +147,9 @@ function updateTable(){
             <td>${c.tag}</td>
             <td>${c.name}</td>
             <td>${c.rarity}</td>
-            <td>${c.v1own} / ${c.v1max}</td>
-            <td>${c.v2own} / ${c.v2max}</td>
-            <td>${c.v3own} / ${c.v3max}</td>
+            <td>${safeRatio(c.v1own, c.v1max)}</td>
+            <td>${safeRatio(c.v2own, c.v2max)}</td>
+            <td>${safeRatio(c.v3own, c.v3max)}</td>
         </tr>`;
     });
 
