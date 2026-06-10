@@ -119,3 +119,43 @@ td, th {
     padding: 10px;
     border-bottom: 1px solid var(--border);
 }
+#filtersPanel {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    background: var(--bg-main);
+
+    padding: 12px;
+
+    border-bottom: 1px solid var(--border);
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ogni riga separata */
+.filterRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* search full width feel */
+.filterRow input {
+    width: 100%;
+    max-width: 500px;
+}
+
+/* checkbox row più compatta */
+.checkboxRow {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* evita “saltelli” quando scrolla */
+#collectionPage {
+    display: flex;
+    flex-direction: column;
+}
