@@ -3,6 +3,19 @@ document.addEventListener("DOMContentLoaded", () => {
 let allCards = [];
 let currentGame = "";
 
+// =========================
+// LOAD DATA
+// =========================
+fetch("./collection.json")
+.then(r => r.json())
+.then(data => {
+    allCards = data.cards;
+    buildHome();
+});
+
+// =========================
+// HELPERS
+// =========================
 function calcPercent(own, max) {
     if (!max || max === 0) return "N/A";
     return ((own / max) * 100).toFixed(2) + "%";
@@ -13,18 +26,11 @@ function safeRatio(own, max) {
     return `${own} / ${max}`;
 }
 
-   
-fetch("./collection.json")
-.then(r => r.json())
-.then(data => {
-
-   allCards = data.cards;
-   buildHome();
-
-});
-
-    
+// =========================
+// HOME (GRID RESPONSIVE)
+// =========================
 function buildHome(){
+
     const container = document.getElementById("gameCards");
     container.innerHTML = "";
 
@@ -34,24 +40,16 @@ function buildHome(){
 
         const cards = allCards.filter(c => c.game === game);
 
-        let own = 0;
-        let max = 0;
+        let v1own=0,v1max=0;
+        let v2own=0,v2max=0;
+        let v3own=0,v3max=0;
 
-        cards.forEach(c => {
-            own += c.v1own + c.v2own + c.v3own;
-            max += c.v1max + c.v2max + c.v3max;
-        });
-
-        let v1own = 0, v1max = 0;
-        let v2own = 0, v2max = 0;
-        let v3own = 0, v3max = 0;
-      
         cards.forEach(c => {
             v1own += c.v1own; v1max += c.v1max;
             v2own += c.v2own; v2max += c.v2max;
             v3own += c.v3own; v3max += c.v3max;
         });
-      
+
         const v1 = calcPercent(v1own, v1max);
         const v2 = calcPercent(v2own, v2max);
         const v3 = calcPercent(v3own, v3max);
@@ -59,17 +57,23 @@ function buildHome(){
         container.innerHTML += `
         <div class="gameCard">
             <h3>${game}</h3>
-        
-            <p>V1: ${v1}</p>
-            <p>V2: ${v2}</p>
-            <p>V3: ${v3}</p>
-        
+
+            <div class="progressBlock">
+                <div>V1: ${v1}</div>
+                <div>V2: ${v2}</div>
+                <div>V3: ${v3}</div>
+            </div>
+
             <button onclick="openGame('${game}')">Apri</button>
         </div>`;
     });
 }
 
+// =========================
+// OPEN GAME
+// =========================
 window.openGame = function(game){
+
     currentGame = game;
 
     document.getElementById("homePage").classList.add("hidden");
@@ -81,39 +85,80 @@ window.openGame = function(game){
     updateTable();
 };
 
+// =========================
+// BACK HOME
+// =========================
 document.getElementById("homeButton").onclick = () => {
     document.getElementById("collectionPage").classList.add("hidden");
     document.getElementById("homePage").classList.remove("hidden");
 };
 
+// =========================
+// CHIP FILTERS
+// =========================
 function buildFilters(){
+
     const cards = allCards.filter(c => c.game === currentGame);
 
     const rarity = [...new Set(cards.map(c => c.rarity))];
     const sets = [...new Set(cards.map(c => c.set))];
 
-    const raritySelect = document.getElementById("rarityFilter");
-    raritySelect.innerHTML = `<option value="All">All</option>`;
-    rarity.forEach(r => raritySelect.innerHTML += `<option>${r}</option>`);
+    const rarityDiv = document.getElementById("rarityFilter");
+    rarityDiv.innerHTML = createChip("All","rarity","All",true);
 
-    const setSelect = document.getElementById("setFilter");
-    setSelect.innerHTML = `<option value="All">All</option>`;
-    sets.forEach(s => setSelect.innerHTML += `<option>${s}</option>`);
+    rarity.forEach(r => {
+        rarityDiv.innerHTML += createChip(r,"rarity",r,false);
+    });
+
+    const setDiv = document.getElementById("setFilter");
+    setDiv.innerHTML = createChip("All","set","All",true);
+
+    sets.forEach(s => {
+        setDiv.innerHTML += createChip(s,"set",s,false);
+    });
 }
 
-["searchBox","rarityFilter","setFilter","hideV1","hideV2","hideV3"]
-.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener("input", updateTable);
+function createChip(label,type,value,active){
+    return `<button class="chip ${active?'active':''}" data-type="${type}" data-value="${value}">
+        ${label}
+    </button>`;
+}
+
+// chip click
+document.addEventListener("click", (e) => {
+    if(e.target.classList.contains("chip")){
+        const type = e.target.dataset.type;
+        const value = e.target.dataset.value;
+
+        document.querySelectorAll(`.chip[data-type="${type}"]`)
+        .forEach(c => c.classList.remove("active"));
+
+        e.target.classList.add("active");
+
+        updateTable();
+    }
 });
 
+// =========================
+// FILTER INPUTS
+// =========================
+["searchBox","hideV1","hideV2","hideV3"]
+.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener("input", updateTable);
+});
+
+// =========================
+// TABLE
+// =========================
 function updateTable(){
 
     let cards = allCards.filter(c => c.game === currentGame);
 
     const search = document.getElementById("searchBox").value.toLowerCase();
-    const rarity = document.getElementById("rarityFilter").value;
-    const setName = document.getElementById("setFilter").value;
+
+    const rarity = document.querySelector('.chip[data-type="rarity"].active')?.dataset.value || "All";
+    const setName = document.querySelector('.chip[data-type="set"].active')?.dataset.value || "All";
 
     if(search){
         cards = cards.filter(c =>
@@ -139,7 +184,12 @@ function updateTable(){
 
     let html = `<table>
         <tr>
-            <th>Tag</th><th>Name</th><th>Rarity</th><th>V1</th><th>V2</th><th>V3</th>
+            <th>Tag</th>
+            <th>Name</th>
+            <th>Rarity</th>
+            <th>V1</th>
+            <th>V2</th>
+            <th>V3</th>
         </tr>`;
 
     cards.forEach(c => {
@@ -147,9 +197,9 @@ function updateTable(){
             <td>${c.tag}</td>
             <td>${c.name}</td>
             <td>${c.rarity}</td>
-            <td>${safeRatio(c.v1own, c.v1max)}</td>
-            <td>${safeRatio(c.v2own, c.v2max)}</td>
-            <td>${safeRatio(c.v3own, c.v3max)}</td>
+            <td>${safeRatio(c.v1own,c.v1max)}</td>
+            <td>${safeRatio(c.v2own,c.v2max)}</td>
+            <td>${safeRatio(c.v3own,c.v3max)}</td>
         </tr>`;
     });
 
