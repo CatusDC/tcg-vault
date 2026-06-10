@@ -9,7 +9,7 @@ let currentGame = "";
 fetch("./collection.json")
 .then(r => r.json())
 .then(data => {
-    allCards = data.cards;
+    allCards = data.cards || [];
     buildHome();
 });
 
@@ -27,7 +27,7 @@ function safeRatio(own, max) {
 }
 
 // =========================
-// HOME (GRID RESPONSIVE)
+// HOME GRID
 // =========================
 function buildHome(){
 
@@ -94,7 +94,7 @@ document.getElementById("homeButton").onclick = () => {
 };
 
 // =========================
-// CHIP FILTERS
+// BUILD FILTER CHIPS (FIXED)
 // =========================
 function buildFilters(){
 
@@ -104,43 +104,45 @@ function buildFilters(){
     const sets = [...new Set(cards.map(c => c.set))];
 
     const rarityDiv = document.getElementById("rarityFilter");
-    rarityDiv.innerHTML = createChip("All","rarity","All",true);
-
-    rarity.forEach(r => {
-        rarityDiv.innerHTML += createChip(r,"rarity",r,false);
-    });
-
     const setDiv = document.getElementById("setFilter");
-    setDiv.innerHTML = createChip("All","set","All",true);
 
-    sets.forEach(s => {
-        setDiv.innerHTML += createChip(s,"set",s,false);
-    });
+    rarityDiv.innerHTML = "";
+    setDiv.innerHTML = "";
+
+    rarityDiv.appendChild(makeChip("All","rarity","All",true));
+    rarity.forEach(r => rarityDiv.appendChild(makeChip(r,"rarity",r,false)));
+
+    setDiv.appendChild(makeChip("All","set","All",true));
+    sets.forEach(s => setDiv.appendChild(makeChip(s,"set",s,false)));
 }
 
-function createChip(label,type,value,active){
-    return `<button class="chip ${active?'active':''}" data-type="${type}" data-value="${value}">
-        ${label}
-    </button>`;
-}
+// =========================
+// CHIP FACTORY (ROBUST)
+// =========================
+function makeChip(label, type, value, active){
 
-// chip click
-document.addEventListener("click", (e) => {
-    if(e.target.classList.contains("chip")){
-        const type = e.target.dataset.type;
-        const value = e.target.dataset.value;
+    const btn = document.createElement("button");
+
+    btn.className = "chip" + (active ? " active" : "");
+    btn.dataset.type = type;
+    btn.dataset.value = value;
+    btn.innerText = label;
+
+    btn.addEventListener("click", () => {
 
         document.querySelectorAll(`.chip[data-type="${type}"]`)
         .forEach(c => c.classList.remove("active"));
 
-        e.target.classList.add("active");
+        btn.classList.add("active");
 
         updateTable();
-    }
-});
+    });
+
+    return btn;
+}
 
 // =========================
-// FILTER INPUTS
+// INPUT FILTERS
 // =========================
 ["searchBox","hideV1","hideV2","hideV3"]
 .forEach(id => {
@@ -149,13 +151,13 @@ document.addEventListener("click", (e) => {
 });
 
 // =========================
-// TABLE
+// TABLE RENDER
 // =========================
 function updateTable(){
 
     let cards = allCards.filter(c => c.game === currentGame);
 
-    const search = document.getElementById("searchBox").value.toLowerCase();
+    const search = document.getElementById("searchBox")?.value.toLowerCase() || "";
 
     const rarity = document.querySelector('.chip[data-type="rarity"].active')?.dataset.value || "All";
     const setName = document.querySelector('.chip[data-type="set"].active')?.dataset.value || "All";
@@ -173,13 +175,13 @@ function updateTable(){
     if(setName !== "All")
         cards = cards.filter(c => c.set === setName);
 
-    if(document.getElementById("hideV1").checked)
+    if(document.getElementById("hideV1")?.checked)
         cards = cards.filter(c => !(c.v1max > 0 && c.v1own === c.v1max));
 
-    if(document.getElementById("hideV2").checked)
+    if(document.getElementById("hideV2")?.checked)
         cards = cards.filter(c => !(c.v2max > 0 && c.v2own === c.v2max));
 
-    if(document.getElementById("hideV3").checked)
+    if(document.getElementById("hideV3")?.checked)
         cards = cards.filter(c => !(c.v3max > 0 && c.v3own === c.v3max));
 
     let html = `<table>
