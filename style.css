@@ -1,52 +1,43 @@
-/* =========================
-   TCG Vault - FINAL STABLE THEME
-   ========================= */
+/* ==========================================
+   TCG Vault - OPTIMIZED & ACCESSIBLE THEME
+   ========================================== */
 
 :root {
-
     --bg-main: #0D1A63;
     --bg-card: #1A2CA3;
     --bg-accent: #2845D6;
-
     --text-main: #F5F7FF;
-    --text-secondary: rgba(245,247,255,0.75);
-
+    --text-secondary: rgba(245, 247, 255, 0.8); /* Contrasto leggermente aumentato */
     --accent: #F68048;
-
-    --border: rgba(255,255,255,0.12);
-
-    --progress-bg: rgba(255,255,255,0.15);
+    --border: rgba(255, 255, 255, 0.12);
+    --progress-bg: rgba(255, 255, 255, 0.15);
     --progress-fill: #F68048;
+    --focus-ring: 0 0 0 3px rgba(246, 128, 72, 0.6);
 }
 
 /* =========================
-   GLOBAL
+   GLOBAL RESET
    ========================= */
+* {
+    box-sizing: border-box;
+}
 
 body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
     background: var(--bg-main);
     color: var(--text-main);
+    -webkit-font-smoothing: antialiased;
 }
 
-/* IMPORTANT: prevents layout bleed */
-* {
-    box-sizing: border-box;
-}
-
-/* =========================
-   PAGE CONTROL
-   ========================= */
-
+/* Controllo visibilità pagine */
 .hidden {
-    display: none !important;
+    display: none !important; /* Mantenuto !important solo per garantire la sovrascrittura di flex/grid */
 }
 
 /* =========================
-   HOME
+   HOME PAGE
    ========================= */
-
 #homePage {
     padding: 20px;
 }
@@ -62,24 +53,24 @@ body {
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 16px;
-
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
-/* progress block home */
 .progressBlock {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin: 10px 0;
+    margin: 10px 0 16px 0;
     color: var(--text-secondary);
     font-size: 14px;
 }
 
 /* =========================
-   BUTTONS
+   ELEMENTI INTERATTIVI (BOTTONI/INPUT)
    ========================= */
-
 button {
     background: var(--bg-accent);
     border: none;
@@ -87,78 +78,96 @@ button {
     padding: 10px 14px;
     border-radius: 10px;
     cursor: pointer;
-    transition: 0.2s;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background 0.2s, box-shadow 0.2s;
 }
 
 button:hover {
     background: var(--accent);
 }
 
+button:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+.navigation-bar {
+    padding: 12px 20px 0 20px;
+}
+
+/* Input di testo e Select */
+input[type="text"], select {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-main);
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
+}
+
 /* =========================
    COLLECTION PAGE
    ========================= */
-
 #collectionPage {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
-/* =========================
-   STICKY FILTER PANEL
-   (ONLY COLLECTION)
-   ========================= */
-
 #filtersPanel {
     position: sticky;
     top: 0;
     z-index: 100;
-
     background: var(--bg-main);
     border-bottom: 1px solid var(--border);
-
-    padding: 12px;
-
+    padding: 16px 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
-/* each row inside filters */
 .filterRow {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
 }
 
-/* search input full width feel */
-.filterRow input {
+/* Selettore mirato per evitare conflitti con le checkbox */
+.filterRow input[type="text"] {
     width: 100%;
     max-width: 500px;
 }
 
-/* checkbox row */
+/* Checkbox allineamento */
 .checkboxRow {
     font-size: 13px;
     color: var(--text-secondary);
+    align-items: center;
 }
 
-/* =========================
-   INPUTS
-   ========================= */
+.checkboxItem {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
 
-input, select {
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--bg-card);
-    color: var(--text-main);
+.checkboxItem input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: var(--accent); /* Colore personalizzato per la spunta */
 }
 
 /* =========================
    CHIPS (SET / RARITY)
    ========================= */
-
 .chipGroup {
     display: flex;
     flex-wrap: wrap;
@@ -166,27 +175,38 @@ input, select {
 }
 
 .chip {
-    padding: 6px 10px;
+    padding: 6px 12px;
     border-radius: 999px;
     border: 1px solid var(--border);
     background: var(--bg-card);
     color: var(--text-secondary);
+    font-size: 13px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.chip:hover {
+    background: var(--bg-accent);
+    color: white;
 }
 
 .chip.active {
     background: var(--accent);
     color: white;
+    border-color: var(--accent);
+}
+
+.chip:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
 }
 
 /* =========================
    TABLE
    ========================= */
-
 .tableWrapper {
     overflow-x: auto;
-    padding: 10px;
+    padding: 20px;
     flex: 1;
 }
 
@@ -201,28 +221,27 @@ th {
     position: sticky;
     top: 0;
     z-index: 1;
+    text-align: left;
 }
 
 td, th {
-    padding: 10px;
+    padding: 12px;
     border-bottom: 1px solid var(--border);
 }
 
 tr:nth-child(even) {
-    background: rgba(255,255,255,0.03);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 /* =========================
-   RESPONSIVE
+   RESPONSIVE DESIGN
    ========================= */
-
 @media (max-width: 600px) {
-
     #gameCards {
         grid-template-columns: 1fr;
     }
 
-    .filterRow input {
+    .filterRow input[type="text"] {
         max-width: 100%;
     }
 
