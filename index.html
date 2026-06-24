@@ -8,60 +8,70 @@
 </head>
 <body>
 
-<!-- =========================
-     HOME
-========================= -->
-<div id="homePage">
+    <!-- =========================
+         HOME PAGE
+    ========================= -->
+    <main id="homePage">
+        <header>
+            <h1>🎴 TCG Vault</h1>
+        </header>
+        <section id="gameCards"></section>
+    </main>
 
-    <h1>🎴 TCG Vault</h1>
+    <!-- =========================
+         COLLECTION PAGE
+    ========================= -->
+    <div id="collectionPage" class="hidden">
+        <nav class="navigation-bar">
+            <button id="homeButton">← Home</button>
+        </nav>
+        
+        <header>
+            <h2 id="gameTitle"></h2>
+        </header>
 
-    <div id="gameCards"></div>
+        <!-- FILTERS -->
+        <aside id="filtersPanel">
+        
+            <!-- RIGA 1: SEARCH -->
+            <div class="filterRow">
+                <input type="text" id="searchBox" placeholder="Cerca nome / tag">
+            </div>
+        
+            <!-- RIGA 2: SET -->
+            <div class="filterRow">
+                <div id="setFilter" class="chipGroup"></div>
+            </div>
+        
+            <!-- RIGA 3: RARITY -->
+            <div class="filterRow">
+                <div id="rarityFilter" class="chipGroup"></div>
+            </div>
+        
+            <!-- RIGA 4: CHECKBOX -->
+            <div class="filterRow checkboxRow">
+                <div class="checkboxItem">
+                    <input type="checkbox" id="hideV1">
+                    <label for="hideV1">Nascondi V1 completati</label>
+                </div>
+                <div class="checkboxItem">
+                    <input type="checkbox" id="hideV2">
+                    <label for="hideV2">Nascondi V2 completati</label>
+                </div>
+                <div class="checkboxItem">
+                    <input type="checkbox" id="hideV3">
+                    <label for="hideV3">Nascondi V3 completati</label>
+                </div>
+            </div>
+        
+        </aside>
 
-</div>
-
-<!-- =========================
-     COLLECTION
-========================= -->
-<div id="collectionPage" class="hidden">
-
-    <button id="homeButton">← Home</button>
-
-    <h2 id="gameTitle"></h2>
-
-    <!-- FILTERS -->
-    <div id="filtersPanel">
-    
-        <!-- RIGA 1: SEARCH -->
-        <div class="filterRow">
-            <input type="text" id="searchBox" placeholder="Search name / tag">
-        </div>
-    
-        <!-- RIGA 2: SET -->
-        <div class="filterRow">
-            <div id="setFilter" class="chipGroup"></div>
-        </div>
-    
-        <!-- RIGA 3: RARITY -->
-        <div class="filterRow">
-            <div id="rarityFilter" class="chipGroup"></div>
-        </div>
-    
-        <!-- RIGA 4: CHECKBOX -->
-        <div class="filterRow checkboxRow">
-    
-            <label><input type="checkbox" id="hideV1"> Hide V1 complete</label>
-            <label><input type="checkbox" id="hideV2"> Hide V2 complete</label>
-            <label><input type="checkbox" id="hideV3"> Hide V3 complete</label>
-    
-        </div>
-    
+        <!-- TABLE CONTAINER -->
+        <section class="tableWrapper">
+            <div id="tableContainer"></div>
+        </section>
     </div>
 
-    <div id="tableContainer" class="tableWrapper"></div>
-
-</div>
-
-<script src="app.js"></script>
-
+    <script src="app.js"></script>
 </body>
 </html>
