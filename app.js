@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-
     let allCards = [];
     let currentGame = "";
 
@@ -41,10 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
     function buildHome() {
         if (!gameCardsContainer) return;
-        
-        // Estrae la lista dei giochi univoci
+
         const games = [...new Set(allCards.map(c => c.game))];
-        let htmlBuffer = ""; // Ottimizzazione: accumuliamo l'HTML in memoria
+        let htmlBuffer = "";
 
         games.forEach(game => {
             const cards = allCards.filter(c => c.game === game);
@@ -60,7 +58,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const p2 = percent(v2o, v2m);
             const p3 = percent(v3o, v3m);
 
-            // Aggiungiamo un data-attribute "data-game" per intercettare il click senza usare onclick inline
             htmlBuffer += `
             <div class="gameCard">
                 <h3>${game}</h3>
@@ -73,7 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>`;
         });
 
-        // Una singola scrittura sul DOM
         gameCardsContainer.innerHTML = htmlBuffer;
     }
 
@@ -102,7 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
         collectionPage.classList.remove("hidden");
         gameTitle.innerText = game;
 
-        // Resetta la barra di ricerca e le checkbox quando cambi gioco
         document.getElementById("searchBox").value = "";
         ["hideV1", "hideV2", "hideV3"].forEach(id => {
             const cb = document.getElementById(id);
@@ -113,7 +108,6 @@ document.addEventListener("DOMContentLoaded", () => {
         updateTable();
     }
 
-    // Navigazione pulsante Home
     if (homeButton) {
         homeButton.addEventListener("click", () => {
             collectionPage.classList.add("hidden");
@@ -137,7 +131,6 @@ document.addEventListener("DOMContentLoaded", () => {
         rarityDiv.innerHTML = "";
         setDiv.innerHTML = "";
 
-        // Genera chip predefinita 'Tutti'
         rarityDiv.appendChild(makeChip("All", "rarity", "All", true));
         rarity.forEach(r => rarityDiv.appendChild(makeChip(r, "rarity", r, false)));
 
@@ -187,7 +180,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const setActive = document.querySelector('.chip[data-type="set"].active');
         const set = setActive ? setActive.dataset.value : "All";
 
-        // Filtro di Ricerca (Nome o Tag)
         if (search) {
             cards = cards.filter(c =>
                 (c.name && c.name.toLowerCase().includes(search)) ||
@@ -195,7 +187,6 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         }
 
-        // Filtro Rarità e Set
         if (rarity !== "All") {
             cards = cards.filter(c => c.rarity === rarity);
         }
@@ -203,18 +194,19 @@ document.addEventListener("DOMContentLoaded", () => {
             cards = cards.filter(c => c.set === set);
         }
 
-        // Filtro Checkbox di completamento (Se attivo, nasconde gli elementi completi)
+        // --- MODIFICA #1 INIZIA QUI ---
+        // Filtro Checkbox di completamento (Se attivo, nasconde gli elementi completi O non applicabili)
         if (document.getElementById("hideV1").checked) {
-            cards = cards.filter(c => !(c.v1max > 0 && c.v1own === c.v1max));
+            cards = cards.filter(c => !( (c.v1max > 0 && c.v1own === c.v1max) || (c.v1max === 0) ));
         }
         if (document.getElementById("hideV2").checked) {
-            cards = cards.filter(c => !(c.v2max > 0 && c.v2own === c.v2max));
+            cards = cards.filter(c => !( (c.v2max > 0 && c.v2own === c.v2max) || (c.v2max === 0) ));
         }
         if (document.getElementById("hideV3").checked) {
-            cards = cards.filter(c => !(c.v3max > 0 && c.v3own === c.v3max));
+            cards = cards.filter(c => !( (c.v3max > 0 && c.v3own === c.v3max) || (c.v3max === 0) ));
         }
+        // --- MODIFICA #1 FINISCE QUI ---
 
-        // Se non ci sono risultati
         if (cards.length === 0) {
             tableContainer.innerHTML = `
                 <div style="text-align: center; padding: 40px; opacity: 0.7;">
@@ -223,7 +215,6 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // Costruzione dell'HTML della Tabella
         let htmlTable = `
         <table>
             <thead>
@@ -265,8 +256,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return ((own / max) * 100).toFixed(2) + "%";
     }
 
+    // --- MODIFICA #2 INIZIA QUI ---
     function ratio(own, max) {
-        if (!max || max === 0) return "N/A";
+        // Se max non è definito o è zero, mostra un trattino
+        if (!max || max === 0) return "-";
         return `${own} / ${max}`;
     }
+    // --- MODIFICA #2 FINISCE QUI ---
 });
