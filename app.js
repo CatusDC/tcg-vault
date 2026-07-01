@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+
     let allCards = [];
     let currentGame = "";
 
@@ -9,6 +10,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const gameTitle = document.getElementById("gameTitle");
     const homeButton = document.getElementById("homeButton");
     const tableContainer = document.getElementById("tableContainer");
+
+    // Elementi Modale per Ingrandimento Immagini
+    const imageModal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("modalImg");
+    const modalClose = document.querySelector(".modal-close");
+
+    // Elementi Dashboard Statistiche
+    const statCount = document.getElementById("statCount");
+    const statV1 = document.getElementById("statV1");
+    const statV2 = document.getElementById("statV2");
+    const statV3 = document.getElementById("statV3");
+    const barV1 = document.getElementById("barV1");
+    const barV2 = document.getElementById("barV2");
+    const barV3 = document.getElementById("barV3");
 
     // ==========================================
     // CARICAMENTO DATI (JSON)
@@ -40,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
     function buildHome() {
         if (!gameCardsContainer) return;
-
+        
         const games = [...new Set(allCards.map(c => c.game))];
         let htmlBuffer = "";
 
@@ -74,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // DELEGAZIONE DEGLI EVENTI SUI GIOCHI
+    // DELEGAZIONE DEGLI EVENTI (GIOCHI & ZOOM IMMAGINI)
     // ==========================================
     if (gameCardsContainer) {
         gameCardsContainer.addEventListener("click", (event) => {
@@ -84,6 +99,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (gameName) {
                     openGame(gameName);
                 }
+            }
+        });
+    }
+
+    if (tableContainer) {
+        tableContainer.addEventListener("click", (event) => {
+            const thumb = event.target.closest(".card-thumb");
+            if (thumb && imageModal && modalImg) {
+                modalImg.src = thumb.dataset.fullSrc || thumb.src;
+                imageModal.classList.remove("hidden");
+            }
+        });
+    }
+
+    if (modalClose && imageModal) {
+        modalClose.addEventListener("click", () => imageModal.classList.add("hidden"));
+        imageModal.addEventListener("click", (e) => {
+            if (e.target === imageModal || e.target === modalClose) {
+                imageModal.classList.add("hidden");
             }
         });
     }
@@ -138,9 +172,6 @@ document.addEventListener("DOMContentLoaded", () => {
         sets.forEach(s => setDiv.appendChild(makeChip(s, "set", s, false)));
     }
 
-    // ==========================================
-    // FABBRICA DEI CHIP (BOTTONI FILTRO)
-    // ==========================================
     function makeChip(label, type, value, active) {
         const b = document.createElement("button");
         b.className = "chip" + (active ? " active" : "");
@@ -157,13 +188,39 @@ document.addEventListener("DOMContentLoaded", () => {
         return b;
     }
 
-    // ==========================================
-    // ASCOLTA EVENTI DI INPUT & FILTRO
-    // ==========================================
     ["searchBox", "hideV1", "hideV2", "hideV3"].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener("input", updateTable);
     });
+
+    // ==========================================
+    // CALCOLO STATISTICHE DINAMICHE
+    // ==========================================
+    function updateStatistics(filteredCards, totalGameCardsCount) {
+        if (!statCount) return;
+
+        statCount.innerText = `${filteredCards.length} / ${totalGameCardsCount}`;
+
+        let v1o = 0, v1m = 0, v2o = 0, v2m = 0, v3o = 0, v3m = 0;
+
+        filteredCards.forEach(c => {
+            v1o += c.v1own || 0; v1m += c.v1max || 0;
+            v2o += c.v2own || 0; v2m += c.v2max || 0;
+            v3o += c.v3own || 0; v3m += c.v3max || 0;
+        });
+
+        const p1 = percent(v1o, v1m);
+        const p2 = percent(v2o, v2m);
+        const p3 = percent(v3o, v3m);
+
+        statV1.innerText = `${p1} (${v1o}/${v1m})`;
+        statV2.innerText = `${p2} (${v2o}/${v2m})`;
+        statV3.innerText = `${p3} (${v3o}/${v3m})`;
+
+        barV1.style.width = v1m > 0 ? `${(v1o / v1m) * 100}%` : '0%';
+        barV2.style.width = v2m > 0 ? `${(v2o / v2m) * 100}%` : '0%';
+        barV3.style.width = v3m > 0 ? `${(v3o / v3m) * 100}%` : '0%';
+    }
 
     // ==========================================
     // AGGIORNAMENTO DELLA TABELLA DATI
@@ -171,7 +228,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateTable() {
         if (!tableContainer) return;
 
-        let cards = allCards.filter(c => c.game === currentGame);
+        const allGameCards = allCards.filter(c => c.game === currentGame);
+        let cards = [...allGameCards];
+
         const search = document.getElementById("searchBox").value.trim().toLowerCase();
         
         const rarityActive = document.querySelector('.chip[data-type="rarity"].active');
@@ -187,15 +246,9 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         }
 
-        if (rarity !== "All") {
-            cards = cards.filter(c => c.rarity === rarity);
-        }
-        if (set !== "All") {
-            cards = cards.filter(c => c.set === set);
-        }
+        if (rarity !== "All") cards = cards.filter(c => c.rarity === rarity);
+        if (set !== "All") cards = cards.filter(c => c.set === set);
 
-        // --- MODIFICA #1 INIZIA QUI ---
-        // Filtro Checkbox di completamento (Se attivo, nasconde gli elementi completi O non applicabili)
         if (document.getElementById("hideV1").checked) {
             cards = cards.filter(c => !( (c.v1max > 0 && c.v1own === c.v1max) || (c.v1max === 0) ));
         }
@@ -205,7 +258,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (document.getElementById("hideV3").checked) {
             cards = cards.filter(c => !( (c.v3max > 0 && c.v3own === c.v3max) || (c.v3max === 0) ));
         }
-        // --- MODIFICA #1 FINISCE QUI ---
+
+        updateStatistics(cards, allGameCards.length);
 
         if (cards.length === 0) {
             tableContainer.innerHTML = `
@@ -219,6 +273,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <table>
             <thead>
                 <tr>
+                    <th style="width: 70px;">Img</th>
                     <th>Tag</th>
                     <th>Nome</th>
                     <th>Rarità</th>
@@ -230,8 +285,24 @@ document.addEventListener("DOMContentLoaded", () => {
             <tbody>`;
 
         cards.forEach(c => {
+            // --- MODIFICA APPLICATA QUI ---
+            // Controlla se 'c.img' è presente, altrimenti usa l'icona segnaposto
+            let imgHTML = `<span class="placeholder-icon">🖼️</span>`;
+            if (c.img) {
+                imgHTML = `
+                <div class="img-preview-container">
+                    <img src="${c.img}" 
+                         alt="${c.name || 'card'}" 
+                         class="card-thumb" 
+                         loading="lazy" 
+                         data-full-src="${c.img}"
+                         onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'placeholder-icon\\'>❌</span>';">
+                </div>`;
+            }
+
             htmlTable += `
             <tr>
+                <td>${imgHTML}</td>
                 <td><strong>${c.tag || '-'}</strong></td>
                 <td>${c.name || '-'}</td>
                 <td>${c.rarity || '-'}</td>
@@ -256,11 +327,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return ((own / max) * 100).toFixed(2) + "%";
     }
 
-    // --- MODIFICA #2 INIZIA QUI ---
     function ratio(own, max) {
-        // Se max non è definito o è zero, mostra un trattino
         if (!max || max === 0) return "-";
         return `${own} / ${max}`;
     }
-    // --- MODIFICA #2 FINISCE QUI ---
 });
