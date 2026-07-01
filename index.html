@@ -30,24 +30,43 @@
             <h2 id="gameTitle"></h2>
         </header>
 
+        <!-- DASHBOARD STATISTICHE DINAMICHE -->
+        <section id="statsPanel" class="stats-container">
+            <div class="stat-card">
+                <span class="stat-label">Visibili / Totali</span>
+                <span id="statCount" class="stat-value">- / -</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Completamento V1</span>
+                <span id="statV1" class="stat-value">-</span>
+                <div class="progress-bar-container"><div id="barV1" class="progress-bar"></div></div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Completamento V2</span>
+                <span id="statV2" class="stat-value">-</span>
+                <div class="progress-bar-container"><div id="barV2" class="progress-bar"></div></div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Completamento V3</span>
+                <span id="statV3" class="stat-value">-</span>
+                <div class="progress-bar-container"><div id="barV3" class="progress-bar"></div></div>
+            </div>
+        </section>
+
         <!-- FILTERS -->
         <aside id="filtersPanel">
-        
             <!-- RIGA 1: SEARCH -->
             <div class="filterRow">
                 <input type="text" id="searchBox" placeholder="Cerca nome / tag">
             </div>
-        
             <!-- RIGA 2: SET -->
             <div class="filterRow">
                 <div id="setFilter" class="chipGroup"></div>
             </div>
-        
             <!-- RIGA 3: RARITY -->
             <div class="filterRow">
                 <div id="rarityFilter" class="chipGroup"></div>
             </div>
-        
             <!-- RIGA 4: CHECKBOX -->
             <div class="filterRow checkboxRow">
                 <div class="checkboxItem">
@@ -63,13 +82,18 @@
                     <label for="hideV3">Nascondi V3 completati</label>
                 </div>
             </div>
-        
         </aside>
 
         <!-- TABLE CONTAINER -->
         <section class="tableWrapper">
             <div id="tableContainer"></div>
         </section>
+    </div>
+
+    <!-- POPUP ZOOM IMMAGINE -->
+    <div id="imageModal" class="modal hidden">
+        <span class="modal-close">&times;</span>
+        <img class="modal-content" id="modalImg">
     </div>
 
     <script src="app.js"></script>
