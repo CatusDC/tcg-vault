@@ -1,5 +1,5 @@
 /* ==========================================
-   TCG Vault - OPTIMIZED & ACCESSIBLE THEME
+   TCG Vault - ADVANCED & ACCESSIBLE THEME
    ========================================== */
 
 :root {
@@ -7,7 +7,7 @@
     --bg-card: #1A2CA3;
     --bg-accent: #2845D6;
     --text-main: #F5F7FF;
-    --text-secondary: rgba(245, 247, 255, 0.8); /* Contrasto leggermente aumentato */
+    --text-secondary: rgba(245, 247, 255, 0.8);
     --accent: #F68048;
     --border: rgba(255, 255, 255, 0.12);
     --progress-bg: rgba(255, 255, 255, 0.15);
@@ -30,9 +30,8 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* Controllo visibilità pagine */
 .hidden {
-    display: none !important; /* Mantenuto !important solo per garantire la sovrascrittura di flex/grid */
+    display: none !important;
 }
 
 /* =========================
@@ -96,7 +95,6 @@ button:focus-visible {
     padding: 12px 20px 0 20px;
 }
 
-/* Input di testo e Select */
 input[type="text"], select {
     padding: 10px;
     border-radius: 8px;
@@ -114,12 +112,59 @@ input[type="text"]:focus, select:focus {
 }
 
 /* =========================
-   COLLECTION PAGE
+   COLLECTION PAGE & DASHBOARD STATS
    ========================= */
 #collectionPage {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+}
+
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    padding: 10px 20px;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Barre di progresso grafiche */
+.progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: var(--progress-bg);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--progress-fill);
+    border-radius: 3px;
+    transition: width 0.4s ease-out;
 }
 
 #filtersPanel {
@@ -140,13 +185,11 @@ input[type="text"]:focus, select:focus {
     gap: 10px;
 }
 
-/* Selettore mirato per evitare conflitti con le checkbox */
 .filterRow input[type="text"] {
     width: 100%;
     max-width: 500px;
 }
 
-/* Checkbox allineamento */
 .checkboxRow {
     font-size: 13px;
     color: var(--text-secondary);
@@ -162,7 +205,7 @@ input[type="text"]:focus, select:focus {
 
 .checkboxItem input[type="checkbox"] {
     cursor: pointer;
-    accent-color: var(--accent); /* Colore personalizzato per la spunta */
+    accent-color: var(--accent);
 }
 
 /* =========================
@@ -202,7 +245,7 @@ input[type="text"]:focus, select:focus {
 }
 
 /* =========================
-   TABLE
+   TABLE & IMAGES
    ========================= */
 .tableWrapper {
     overflow-x: auto;
@@ -212,7 +255,7 @@ input[type="text"]:focus, select:focus {
 
 table {
     width: 100%;
-    min-width: 650px;
+    min-width: 750px; /* Aumentato leggermente per fare spazio alla colonna immagine */
     border-collapse: collapse;
 }
 
@@ -227,10 +270,90 @@ th {
 td, th {
     padding: 12px;
     border-bottom: 1px solid var(--border);
+    vertical-align: middle;
 }
 
 tr:nth-child(even) {
     background: rgba(255, 255, 255, 0.02);
+}
+
+/* Miniature Immagini con lazy loading */
+.img-preview-container {
+    width: 44px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.card-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: zoom-in;
+    transition: transform 0.2s;
+}
+
+.card-thumb:hover {
+    transform: scale(1.1);
+}
+
+.placeholder-icon {
+    font-size: 20px;
+    opacity: 0.5;
+}
+
+/* =========================
+   MODALE ZOOM POPUP
+   ========================= */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    padding-top: 60px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    margin: auto;
+    display: block;
+    max-width: 90%;
+    max-height: 80vh;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    animation: zoom 0.25s ease-out;
+}
+
+@keyframes zoom {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.modal-close:hover {
+    color: var(--accent);
 }
 
 /* =========================
@@ -246,6 +369,10 @@ tr:nth-child(even) {
     }
 
     table {
-        min-width: 500px;
+        min-width: 550px;
+    }
+
+    .stats-container {
+        grid-template-columns: 1fr 1fr;
     }
 }
