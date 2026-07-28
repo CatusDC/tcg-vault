@@ -24,10 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const barV2 = document.getElementById("barV2");
     const barV3 = document.getElementById("barV3");
 
-    // Elementi per il Pannello Filtri a Scomparsa
-    const toggleFiltersBtn = document.getElementById("toggleFiltersBtn");
-    const filtersContent = document.getElementById("filtersContent");
-
     // ==========================================
     // CARICAMENTO DATI (JSON)
     // ==========================================
@@ -130,20 +126,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Gestore per mostrare/nascondere i filtri (Toggle)
-    if (toggleFiltersBtn && filtersContent) {
-        toggleFiltersBtn.addEventListener("click", () => {
-            const isHidden = filtersContent.classList.contains("collapsible-hidden");
-            if (isHidden) {
-                filtersContent.classList.remove("collapsible-hidden");
-                toggleFiltersBtn.innerText = "🔼 Nascondi Filtri";
-            } else {
-                filtersContent.classList.add("collapsible-hidden");
-                toggleFiltersBtn.innerText = "🔍 Mostra Filtri";
-            }
-        });
-    }
-
     // ==========================================
     // APRI DETTAGLIO GIOCO
     // ==========================================
@@ -154,18 +136,12 @@ document.addEventListener("DOMContentLoaded", () => {
         collectionPage.classList.remove("hidden");
         gameTitle.innerText = game;
 
-        // Reset immediato dei campi di ricerca
+        // Reset del testo dei filtri
         document.getElementById("searchBox").value = "";
         ["hideV1", "hideV2", "hideV3"].forEach(id => {
             const cb = document.getElementById(id);
             if (cb) cb.checked = false;
         });
-
-        // Di default teniamo i filtri chiusi all'apertura del gioco per pulizia
-        if (filtersContent && toggleFiltersBtn) {
-            filtersContent.classList.add("collapsible-hidden");
-            toggleFiltersBtn.innerText = "🔍 Mostra Filtri";
-        }
 
         requestAnimationFrame(() => {
             setTimeout(() => {
@@ -354,7 +330,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return ((own / max) * 100).toFixed(2) + "%";
     }
 
-    // Restituisce la frazione posseduta / massima
     function ratio(own, max) {
         if (!max || max === 0) return "-";
         return `${own} / ${max}`;
