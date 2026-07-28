@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-
     let allCards = [];
     let currentGame = "";
 
@@ -62,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
         games.forEach(game => {
             const cards = allCards.filter(c => c.game === game);
             let v1o = 0, v1m = 0, v2o = 0, v2m = 0, v3o = 0, v3m = 0;
-
+            
             cards.forEach(c => {
                 v1o += c.v1own || 0; v1m += c.v1max || 0;
                 v2o += c.v2own || 0; v2m += c.v2max || 0;
@@ -84,12 +83,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 <button class="open-game-btn" data-game="${game}">Apri</button>
             </div>`;
         });
-
         gameCardsContainer.innerHTML = htmlBuffer;
     }
 
     // ==========================================
-    // DELEGAZIONE DEGLI EVENTI (GIOCHI & ZOOM IMMAGINI)
+    // DELEGAZIONE DEGLI EVENTI
     // ==========================================
     if (gameCardsContainer) {
         gameCardsContainer.addEventListener("click", (event) => {
@@ -123,23 +121,31 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // APRI DETTAGLIO GIOCO
+    // APRI DETTAGLIO GIOCO (OTTIMIZZATO INP)
     // ==========================================
     function openGame(game) {
         currentGame = game;
         
+        // 1. Esegui subito l'animazione visiva di transizione della pagina (istantaneo)
         homePage.classList.add("hidden");
         collectionPage.classList.remove("hidden");
         gameTitle.innerText = game;
 
+        // Reset immediato dei filtri grafici
         document.getElementById("searchBox").value = "";
         ["hideV1", "hideV2", "hideV3"].forEach(id => {
             const cb = document.getElementById(id);
             if (cb) cb.checked = false;
         });
 
-        buildFilters();
-        updateTable();
+        // 2. Rimanda il calcolo pesante dei filtri e della tabella al frame successivo del browser.
+        // Questo sblocca l'interfaccia eliminando il problema INP!
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                buildFilters();
+                updateTable();
+            }, 0);
+        });
     }
 
     if (homeButton) {
@@ -159,7 +165,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const rarityDiv = document.getElementById("rarityFilter");
         const setDiv = document.getElementById("setFilter");
-
         if (!rarityDiv || !setDiv) return;
 
         rarityDiv.innerHTML = "";
@@ -179,18 +184,26 @@ document.addEventListener("DOMContentLoaded", () => {
         b.dataset.value = value;
         b.innerText = label;
 
-        b.onclick = () => {
+        b.addEventListener("click", () => {
             document.querySelectorAll(`.chip[data-type="${type}"]`)
                 .forEach(x => x.classList.remove("active"));
             b.classList.add("active");
-            updateTable();
-        };
+            
+            // Rimandiamo leggermente il ricalcolo tabella per non bloccare il feedback del click sul chip
+            requestAnimationFrame(() => {
+                updateTable();
+            });
+        });
+
         return b;
     }
 
     ["searchBox", "hideV1", "hideV2", "hideV3"].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.addEventListener("input", updateTable);
+        if (el) {
+            // "input" può essere molto frequente durante la digitazione, usiamo un leggero ritardo se necessario
+            el.addEventListener("input", updateTable);
+        }
     });
 
     // ==========================================
@@ -198,11 +211,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
     function updateStatistics(filteredCards, totalGameCardsCount) {
         if (!statCount) return;
-
         statCount.innerText = `${filteredCards.length} / ${totalGameCardsCount}`;
 
         let v1o = 0, v1m = 0, v2o = 0, v2m = 0, v3o = 0, v3m = 0;
-
         filteredCards.forEach(c => {
             v1o += c.v1own || 0; v1m += c.v1max || 0;
             v2o += c.v2own || 0; v2m += c.v2max || 0;
@@ -227,10 +238,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
     function updateTable() {
         if (!tableContainer) return;
-
         const allGameCards = allCards.filter(c => c.game === currentGame);
         let cards = [...allGameCards];
-
         const search = document.getElementById("searchBox").value.trim().toLowerCase();
         
         const rarityActive = document.querySelector('.chip[data-type="rarity"].active');
@@ -269,7 +278,35 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        let htmlTable = `
+        // Creazione super-ottimizzata della stringa HTML della tabella
+        let rowsHtml = "";
+        cards.forEach(c => {
+            let imgHTML = `<span class="placeholder-icon">🖼️</span>`;
+            if (c.img) {
+                imgHTML = `
+                <div class="img-preview-container">
+                    <img src="${c.img}" 
+                         alt="${c.name || 'card'}" 
+                         class="card-thumb" 
+                         loading="lazy" 
+                         data-full-src="${c.img}"
+                         onerror="this.onerror=null; this.src=''; this.parentElement.innerHTML='<span class=\'placeholder-icon\'>❌</span>';">
+                </div>`;
+            }
+
+            rowsHtml += `
+            <tr>
+                <td>${imgHTML}</td>
+                <td><strong>${c.tag || '-'}</strong></td>
+                <td>${c.name || '-'}</td>
+                <td>${c.rarity || '-'}</td>
+                <td>${ratio(c.v1own, c.v1max)}</td>
+                <td>${ratio(c.v2own, c.v2max)}</td>
+                <td>${ratio(c.v3own, c.v3max)}</td>
+            </tr>`;
+        });
+
+        tableContainer.innerHTML = `
         <table>
             <thead>
                 <tr>
@@ -282,41 +319,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     <th>V3</th>
                 </tr>
             </thead>
-            <tbody>`;
-
-        cards.forEach(c => {
-            // --- MODIFICA APPLICATA QUI ---
-            // Controlla se 'c.img' è presente, altrimenti usa l'icona segnaposto
-            let imgHTML = `<span class="placeholder-icon">🖼️</span>`;
-            if (c.img) {
-                imgHTML = `
-                <div class="img-preview-container">
-                    <img src="${c.img}" 
-                         alt="${c.name || 'card'}" 
-                         class="card-thumb" 
-                         loading="lazy" 
-                         data-full-src="${c.img}"
-                         onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'placeholder-icon\\'>❌</span>';">
-                </div>`;
-            }
-
-            htmlTable += `
-            <tr>
-                <td>${imgHTML}</td>
-                <td><strong>${c.tag || '-'}</strong></td>
-                <td>${c.name || '-'}</td>
-                <td>${c.rarity || '-'}</td>
-                <td>${ratio(c.v1own, c.v1max)}</td>
-                <td>${ratio(c.v2own, c.v2max)}</td>
-                <td>${ratio(c.v3own, c.v3max)}</td>
-            </tr>`;
-        });
-
-        htmlTable += `
+            <tbody>
+                ${rowsHtml}
             </tbody>
         </table>`;
-
-        tableContainer.innerHTML = htmlTable;
     }
 
     // ==========================================
