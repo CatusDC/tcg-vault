@@ -167,7 +167,7 @@ input[type="text"]:focus, select:focus {
 }
 
 /* ==========================================
-   AGGIORNAMENTI PER IL PANNELLO FILTRI COLLAPSIBLE
+   PANNELLO FILTRI CON RIGHE SCORREVOLI
    ========================================== */
 #filtersPanel {
     position: sticky;
@@ -175,53 +175,10 @@ input[type="text"]:focus, select:focus {
     z-index: 100;
     background: var(--bg-main);
     border-bottom: 1px solid var(--border);
-    padding: 10px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-/* Pulsante principale mostra/nascondi */
-.toggle-filters-btn {
-    width: 100%;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    color: var(--text-main);
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background-color 0.2s, border-color 0.2s;
-}
-
-.toggle-filters-btn:hover {
-    background: var(--bg-accent);
-    border-color: var(--accent);
-}
-
-/* Contenitore dei filtri con animazione di transizione */
-.filters-content {
+    padding: 16px 20px;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-height: 1000px; /* Altezza massima indicativa per la transizione */
-    opacity: 1;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out, opacity 0.2s ease-out, padding 0.2s ease-out;
-    padding-top: 10px;
-}
-
-/* Stato nascosto del pannello filtri */
-.collapsible-hidden {
-    max-height: 0 !important;
-    opacity: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    pointer-events: none; /* Impedisce i click involontari se nascosto */
 }
 
 .filterRow {
@@ -233,6 +190,13 @@ input[type="text"]:focus, select:focus {
 .filterRow input[type="text"] {
     width: 100%;
     max-width: 500px;
+}
+
+/* RIGA SPECIALE PER SCROLL ORIZZONTALE MOBILE */
+.scrollableRow {
+    display: block; /* Disattiva il flex a capo automatico */
+    width: 100%;
+    overflow: hidden;
 }
 
 .checkboxRow {
@@ -253,17 +217,27 @@ input[type="text"]:focus, select:focus {
     accent-color: var(--accent);
 }
 
-/* =========================
-   CHIPS (SET / RARITY)
-   ========================= */
+/* ==========================================
+   CHIP GROUP (SCROLL DIRETTO CON SWIPE)
+   ========================================== */
 .chipGroup {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    flex-wrap: nowrap; /* Impedisce assolutamente di andare a capo */
+    overflow-x: auto;  /* Abilita lo scorrimento orizzontale */
+    gap: 8px;
+    padding: 4px 0 8px 0;
+    width: 100%;
+    -webkit-overflow-scrolling: touch; /* Rende super fluido lo swipe su iOS */
+}
+
+/* Nasconde la barra di scorrimento sui browser moderni per estetica */
+.chipGroup::-webkit-scrollbar {
+    display: none;
 }
 
 .chip {
-    padding: 6px 12px;
+    flex: 0 0 auto; /* Impedisce ai chip di rimpicciolirsi per stare nello schermo */
+    padding: 8px 16px;
     border-radius: 999px;
     border: 1px solid var(--border);
     background: var(--bg-card);
