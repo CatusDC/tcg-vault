@@ -24,6 +24,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const barV2 = document.getElementById("barV2");
     const barV3 = document.getElementById("barV3");
 
+    // Elementi per il Pannello Filtri a Scomparsa
+    const toggleFiltersBtn = document.getElementById("toggleFiltersBtn");
+    const filtersContent = document.getElementById("filtersContent");
+
     // ==========================================
     // CARICAMENTO DATI (JSON)
     // ==========================================
@@ -101,22 +105,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Gestione click sulla tabella per zoomare la carta (On-Demand)
+    // Gestione click sulla tabella per lo Zoom On-Demand
     if (tableContainer) {
         tableContainer.addEventListener("click", (event) => {
             const targetThumb = event.target.closest(".card-thumb-placeholder");
             if (targetThumb && imageModal && modalImg) {
                 const realImgUrl = targetThumb.dataset.fullSrc;
-                
                 if (realImgUrl) {
-                    // Mostriamo un indicatore di caricamento nella modale mentre scarica la foto reale
                     modalImg.src = ""; 
                     modalImg.alt = "Caricamento carta...";
-                    
-                    // Mostra la modale
                     imageModal.classList.remove("hidden");
-                    
-                    // Assegna l'URL dell'immagine reale per avviarne il download solo ora!
                     modalImg.src = realImgUrl;
                 }
             }
@@ -132,6 +130,20 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Gestore per mostrare/nascondere i filtri (Toggle)
+    if (toggleFiltersBtn && filtersContent) {
+        toggleFiltersBtn.addEventListener("click", () => {
+            const isHidden = filtersContent.classList.contains("collapsible-hidden");
+            if (isHidden) {
+                filtersContent.classList.remove("collapsible-hidden");
+                toggleFiltersBtn.innerText = "🔼 Nascondi Filtri";
+            } else {
+                filtersContent.classList.add("collapsible-hidden");
+                toggleFiltersBtn.innerText = "🔍 Mostra Filtri";
+            }
+        });
+    }
+
     // ==========================================
     // APRI DETTAGLIO GIOCO
     // ==========================================
@@ -142,13 +154,19 @@ document.addEventListener("DOMContentLoaded", () => {
         collectionPage.classList.remove("hidden");
         gameTitle.innerText = game;
 
+        // Reset immediato dei campi di ricerca
         document.getElementById("searchBox").value = "";
         ["hideV1", "hideV2", "hideV3"].forEach(id => {
             const cb = document.getElementById(id);
             if (cb) cb.checked = false;
         });
 
-        // Eseguiamo il rendering in modo asincrono per non impattare sul thread principale
+        // Di default teniamo i filtri chiusi all'apertura del gioco per pulizia
+        if (filtersContent && toggleFiltersBtn) {
+            filtersContent.classList.add("collapsible-hidden");
+            toggleFiltersBtn.innerText = "🔍 Mostra Filtri";
+        }
+
         requestAnimationFrame(() => {
             setTimeout(() => {
                 buildFilters();
@@ -239,7 +257,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // AGGIORNAMENTO DELLA TABELLA DATI (LIGHT VERSION)
+    // AGGIORNAMENTO DELLA TABELLA DATI
     // ==========================================
     function updateTable() {
         if (!tableContainer) return;
@@ -285,8 +303,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let rowsHtml = "";
         cards.forEach(c => {
-            // Se la carta ha un link immagine, mostriamo il retro-carta (placeholder) leggero
-            // che memorizza l'URL reale nel parametro 'data-full-src'
             let imgHTML = `<span class="placeholder-icon">❌</span>`;
             if (c.img) {
                 imgHTML = `
@@ -338,6 +354,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return ((own / max) * 100).toFixed(2) + "%";
     }
 
+    // Restituisce la frazione posseduta / massima
     function ratio(own, max) {
         if (!max || max === 0) return "-";
         return `${own} / ${max}`;
