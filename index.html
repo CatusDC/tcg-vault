@@ -56,37 +56,31 @@
 
         <!-- FILTERS -->
         <aside id="filtersPanel">
-            <!-- Pulsante principale per aprire/chiudere i filtri -->
-            <button id="toggleFiltersBtn" class="toggle-filters-btn">🔍 Mostra Filtri</button>
-
-            <!-- Contenitore dei filtri effettivi (inizialmente nascosto) -->
-            <div id="filtersContent" class="filters-content collapsible-hidden">
-                <!-- RIGA 1: SEARCH -->
-                <div class="filterRow">
-                    <input type="text" id="searchBox" placeholder="Cerca nome / tag">
+            <!-- RIGA 1: SEARCH -->
+            <div class="filterRow">
+                <input type="text" id="searchBox" placeholder="Cerca nome / tag">
+            </div>
+            <!-- RIGA 2: SET (Scorrevole orizzontalmente) -->
+            <div class="filterRow scrollableRow">
+                <div id="setFilter" class="chipGroup"></div>
+            </div>
+            <!-- RIGA 3: RARITY (Scorrevole orizzontalmente) -->
+            <div class="filterRow scrollableRow">
+                <div id="rarityFilter" class="chipGroup"></div>
+            </div>
+            <!-- RIGA 4: CHECKBOX -->
+            <div class="filterRow checkboxRow">
+                <div class="checkboxItem">
+                    <input type="checkbox" id="hideV1">
+                    <label for="hideV1">Nascondi V1 completati</label>
                 </div>
-                <!-- RIGA 2: SET -->
-                <div class="filterRow">
-                    <div id="setFilter" class="chipGroup"></div>
+                <div class="checkboxItem">
+                    <input type="checkbox" id="hideV2">
+                    <label for="hideV2">Nascondi V2 completati</label>
                 </div>
-                <!-- RIGA 3: RARITY -->
-                <div class="filterRow">
-                    <div id="rarityFilter" class="chipGroup"></div>
-                </div>
-                <!-- RIGA 4: CHECKBOX -->
-                <div class="filterRow checkboxRow">
-                    <div class="checkboxItem">
-                        <input type="checkbox" id="hideV1">
-                        <label for="hideV1">Nascondi V1 completati</label>
-                    </div>
-                    <div class="checkboxItem">
-                        <input type="checkbox" id="hideV2">
-                        <label for="hideV2">Nascondi V2 completati</label>
-                    </div>
-                    <div class="checkboxItem">
-                        <input type="checkbox" id="hideV3">
-                        <label for="hideV3">Nascondi V3 completati</label>
-                    </div>
+                <div class="checkboxItem">
+                    <input type="checkbox" id="hideV3">
+                    <label for="hideV3">Nascondi V3 completati</label>
                 </div>
             </div>
         </aside>
