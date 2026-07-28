@@ -101,12 +101,24 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Gestione click sulla tabella per zoomare la carta (On-Demand)
     if (tableContainer) {
         tableContainer.addEventListener("click", (event) => {
-            const thumb = event.target.closest(".card-thumb");
-            if (thumb && imageModal && modalImg) {
-                modalImg.src = thumb.dataset.fullSrc || thumb.src;
-                imageModal.classList.remove("hidden");
+            const targetThumb = event.target.closest(".card-thumb-placeholder");
+            if (targetThumb && imageModal && modalImg) {
+                const realImgUrl = targetThumb.dataset.fullSrc;
+                
+                if (realImgUrl) {
+                    // Mostriamo un indicatore di caricamento nella modale mentre scarica la foto reale
+                    modalImg.src = ""; 
+                    modalImg.alt = "Caricamento carta...";
+                    
+                    // Mostra la modale
+                    imageModal.classList.remove("hidden");
+                    
+                    // Assegna l'URL dell'immagine reale per avviarne il download solo ora!
+                    modalImg.src = realImgUrl;
+                }
             }
         });
     }
@@ -121,25 +133,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // APRI DETTAGLIO GIOCO (OTTIMIZZATO INP)
+    // APRI DETTAGLIO GIOCO
     // ==========================================
     function openGame(game) {
         currentGame = game;
         
-        // 1. Esegui subito l'animazione visiva di transizione della pagina (istantaneo)
         homePage.classList.add("hidden");
         collectionPage.classList.remove("hidden");
         gameTitle.innerText = game;
 
-        // Reset immediato dei filtri grafici
         document.getElementById("searchBox").value = "";
         ["hideV1", "hideV2", "hideV3"].forEach(id => {
             const cb = document.getElementById(id);
             if (cb) cb.checked = false;
         });
 
-        // 2. Rimanda il calcolo pesante dei filtri e della tabella al frame successivo del browser.
-        // Questo sblocca l'interfaccia eliminando il problema INP!
+        // Eseguiamo il rendering in modo asincrono per non impattare sul thread principale
         requestAnimationFrame(() => {
             setTimeout(() => {
                 buildFilters();
@@ -189,7 +198,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 .forEach(x => x.classList.remove("active"));
             b.classList.add("active");
             
-            // Rimandiamo leggermente il ricalcolo tabella per non bloccare il feedback del click sul chip
             requestAnimationFrame(() => {
                 updateTable();
             });
@@ -200,10 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     ["searchBox", "hideV1", "hideV2", "hideV3"].forEach(id => {
         const el = document.getElementById(id);
-        if (el) {
-            // "input" può essere molto frequente durante la digitazione, usiamo un leggero ritardo se necessario
-            el.addEventListener("input", updateTable);
-        }
+        if (el) el.addEventListener("input", updateTable);
     });
 
     // ==========================================
@@ -234,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // AGGIORNAMENTO DELLA TABELLA DATI
+    // AGGIORNAMENTO DELLA TABELLA DATI (LIGHT VERSION)
     // ==========================================
     function updateTable() {
         if (!tableContainer) return;
@@ -278,19 +283,19 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // Creazione super-ottimizzata della stringa HTML della tabella
         let rowsHtml = "";
         cards.forEach(c => {
-            let imgHTML = `<span class="placeholder-icon">🖼️</span>`;
+            // Se la carta ha un link immagine, mostriamo il retro-carta (placeholder) leggero
+            // che memorizza l'URL reale nel parametro 'data-full-src'
+            let imgHTML = `<span class="placeholder-icon">❌</span>`;
             if (c.img) {
                 imgHTML = `
                 <div class="img-preview-container">
-                    <img src="${c.img}" 
-                         alt="${c.name || 'card'}" 
-                         class="card-thumb" 
-                         loading="lazy" 
-                         data-full-src="${c.img}"
-                         onerror="this.onerror=null; this.src=''; this.parentElement.innerHTML='<span class=\'placeholder-icon\'>❌</span>';">
+                    <div class="card-thumb-placeholder" 
+                         data-full-src="${c.img}" 
+                         title="Clicca per caricare l'immagine">
+                         🎴
+                    </div>
                 </div>`;
             }
 
