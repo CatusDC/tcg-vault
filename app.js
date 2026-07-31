@@ -1,6 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
     let allCards = [];
     let currentGame = "";
+    
+    // Variabile temporanea per tracciare il percorso dell'immagine attualmente zoomata
+    let activeImageUrl = "";
+
+    // CONFIGURAZIONE GOOGLE FORM INTEGRATA
+    const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdPFusqD82Nqq6YHqV_lR4ttaVZghTPsuypX6qNYkYPaZBxPA/formResponse";
+    const GOOGLE_FORM_ENTRY_ID = "entry.1793831591";
 
     // Elementi del DOM riutilizzabili
     const homePage = document.getElementById("homePage");
@@ -14,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const imageModal = document.getElementById("imageModal");
     const modalImg = document.getElementById("modalImg");
     const modalClose = document.querySelector(".modal-close");
+    const reportErrorBtn = document.getElementById("reportErrorBtn");
 
     // Elementi Dashboard Statistiche
     const statCount = document.getElementById("statCount");
@@ -108,6 +116,15 @@ document.addEventListener("DOMContentLoaded", () => {
             if (targetThumb && imageModal && modalImg) {
                 const realImgUrl = targetThumb.dataset.fullSrc;
                 if (realImgUrl) {
+                    // Reset stato pulsante segnalazione ad ogni nuova modale aperta
+                    if (reportErrorBtn) {
+                        reportErrorBtn.classList.remove("success");
+                        reportErrorBtn.innerText = "⚠️ Segnala Errore Immagine";
+                    }
+
+                    // Memorizza il valore univoco dell'immagine aperta
+                    activeImageUrl = realImgUrl;
+
                     modalImg.src = ""; 
                     modalImg.alt = "Caricamento carta...";
                     imageModal.classList.remove("hidden");
@@ -126,6 +143,41 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // GESTIONE INVIO SILENZIOSO LOG ERRORI A GOOGLE FORM
+    if (reportErrorBtn) {
+        reportErrorBtn.addEventListener("click", () => {
+            if (!activeImageUrl) return;
+
+            // Cambia subito il pulsante per dare feedback del click
+            reportErrorBtn.innerText = "Inviando...";
+
+            // Prepariamo i dati in formato url-encoded
+            const formData = new FormData();
+            formData.append(GOOGLE_FORM_ENTRY_ID, activeImageUrl);
+
+            // Inviamo i dati a Google Form in modalità no-cors (silenziosa)
+            fetch(GOOGLE_FORM_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: formData
+            })
+            .then(() => {
+                // Successo dell'invio (con no-cors andrà sempre qui)
+                reportErrorBtn.classList.add("success");
+                reportErrorBtn.innerText = "✅ Segnalazione Salvata!";
+                
+                // Chiudiamo automaticamente la modale dopo 1 secondo per comodità UX
+                setTimeout(() => {
+                    imageModal.classList.add("hidden");
+                }, 1000);
+            })
+            .catch(error => {
+                console.error("Errore durante l'invio della segnalazione:", error);
+                reportErrorBtn.innerText = "❌ Errore, riprova";
+            });
+        });
+    }
+
     // ==========================================
     // APRI DETTAGLIO GIOCO
     // ==========================================
@@ -136,7 +188,6 @@ document.addEventListener("DOMContentLoaded", () => {
         collectionPage.classList.remove("hidden");
         gameTitle.innerText = game;
 
-        // Reset del testo dei filtri
         document.getElementById("searchBox").value = "";
         ["hideV1", "hideV2", "hideV3"].forEach(id => {
             const cb = document.getElementById(id);
