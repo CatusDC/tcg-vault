@@ -5,9 +5,47 @@ document.addEventListener("DOMContentLoaded", () => {
     // Variabile temporanea per tracciare il percorso dell'immagine attualmente zoomata
     let activeImageUrl = "";
 
-    // CONFIGURAZIONE GOOGLE FORM INTEGRATA
+    // ==========================================
+    // CONFIGURAZIONE GOOGLE FORM & GITHUB
+    // ==========================================
     const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdPFusqD82Nqq6YHqV_lR4ttaVZghTPsuypX6qNYkYPaZBxPA/formResponse";
     const GOOGLE_FORM_ENTRY_ID = "entry.1793831591";
+
+    const GITHUB_USER = "cdt5cer"; // Sostituisci con il tuo username GitHub se differente
+
+    // Mappa la corrispondenza dei giochi con i rispettivi repository, cartelle e retro-carta
+    const GAME_MAPPING = {
+        "c-lorcana": {
+            repo: "tcg-assets-lrcn",
+            folder: "c-lorcana",
+            placeholder: "background-lorcana"
+        },
+        "c-lorcana-jp": {
+            repo: "tcg-assets-lrcn",
+            folder: "c-lorcana-jp",
+            placeholder: "background-lorcana"
+        },
+        "c-pokemon-jp": {
+            repo: "tcg-assets-pkmn",
+            folder: "c-pokemon-jp",
+            placeholder: "background-pokemon"
+        },
+        "p-lorcana": {
+            repo: "tcg-assets-lrcn",
+            folder: "p-lorcana",
+            placeholder: "background-lorcana"
+        },
+        "p-riftbound": {
+            repo: "tcg-assets-rftbnd",
+            folder: "p-riftbound",
+            placeholder: "background-riftbound"
+        },
+        "c-riftbound": {
+            repo: "tcg-assets-rftbnd",
+            folder: "c-riftbound",
+            placeholder: "background-riftbound"
+        }
+    };
 
     // Elementi del DOM riutilizzabili
     const homePage = document.getElementById("homePage");
@@ -31,6 +69,36 @@ document.addEventListener("DOMContentLoaded", () => {
     const barV1 = document.getElementById("barV1");
     const barV2 = document.getElementById("barV2");
     const barV3 = document.getElementById("barV3");
+
+    // ==========================================
+    // METODI RISOLUZIONE IMMAGINI DINAMICHE (CDN)
+    // ==========================================
+
+    // Genera l'URL per l'immagine reale della carta (formato .webp)
+    function getCardImageUrl(card) {
+        const gameKey = card.game;
+        const map = GAME_MAPPING[gameKey];
+        if (!map) return null;
+
+        // Se nel JSON 'img' è compilato usiamo quello, altrimenti creiamo il nome usando il 'tag'
+        let imgName = card.img || card.tag;
+        if (!imgName) return null;
+
+        // Assicuriamo l'estensione .webp
+        if (!imgName.toLowerCase().endsWith(".webp")) {
+            imgName += ".webp";
+        }
+
+        return `https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${map.repo}@main/${map.folder}/${imgName}`;
+    }
+
+    // Genera l'URL del retro-carta specifico (placeholder) salvato in 'tcg-assets-main/main/img/'
+    function getPlaceholderImageUrl(card) {
+        const gameKey = card.game;
+        const map = GAME_MAPPING[gameKey];
+        const placeholderName = (map && map.placeholder) ? map.placeholder : "default-back";
+        return `https://cdn.jsdelivr.net/gh/${GITHUB_USER}/tcg-assets-main@main/main/img/${placeholderName}.webp`;
+    }
 
     // ==========================================
     // CARICAMENTO DATI (JSON)
@@ -109,25 +177,41 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Gestione click sulla tabella per lo Zoom On-Demand
+    // Gestione click sulla tabella per lo Zoom On-Demand con cascata di fallback
     if (tableContainer) {
         tableContainer.addEventListener("click", (event) => {
             const targetThumb = event.target.closest(".card-thumb-placeholder");
             if (targetThumb && imageModal && modalImg) {
                 const realImgUrl = targetThumb.dataset.fullSrc;
+                const placeholderImgUrl = targetThumb.dataset.placeholderSrc;
+                
                 if (realImgUrl) {
-                    // Reset stato pulsante segnalazione ad ogni nuova modale aperta
+                    // Reset stato pulsante segnalazione
                     if (reportErrorBtn) {
                         reportErrorBtn.classList.remove("success");
                         reportErrorBtn.innerText = "⚠️ Segnala Errore Immagine";
                     }
 
-                    // Memorizza il valore univoco dell'immagine aperta
                     activeImageUrl = realImgUrl;
 
                     modalImg.src = ""; 
                     modalImg.alt = "Caricamento carta...";
                     imageModal.classList.remove("hidden");
+                    
+                    // GESTIONE FALLBACK MODALE ZOOM
+                    modalImg.onerror = () => {
+                        // Se l'immagine reale fallisce, tenta di caricare il retro-carta specifico
+                        if (modalImg.src !== placeholderImgUrl) {
+                            modalImg.src = placeholderImgUrl;
+                            modalImg.alt = "Carta non trovata - Retro di default";
+                        } else {
+                            // Se fallisce anche il retro-carta, mostra l'emoji come fallback definitivo
+                            modalImg.onerror = null;
+                            modalImg.src = ""; 
+                            modalImg.alt = "❌ Immagine non disponibile";
+                        }
+                    };
+                    
                     modalImg.src = realImgUrl;
                 }
             }
@@ -148,25 +232,20 @@ document.addEventListener("DOMContentLoaded", () => {
         reportErrorBtn.addEventListener("click", () => {
             if (!activeImageUrl) return;
 
-            // Cambia subito il pulsante per dare feedback del click
             reportErrorBtn.innerText = "Inviando...";
 
-            // Prepariamo i dati in formato url-encoded
             const formData = new FormData();
             formData.append(GOOGLE_FORM_ENTRY_ID, activeImageUrl);
 
-            // Inviamo i dati a Google Form in modalità no-cors (silenziosa)
             fetch(GOOGLE_FORM_URL, {
                 method: "POST",
                 mode: "no-cors",
                 body: formData
             })
             .then(() => {
-                // Successo dell'invio (con no-cors andrà sempre qui)
                 reportErrorBtn.classList.add("success");
                 reportErrorBtn.innerText = "✅ Segnalazione Salvata!";
                 
-                // Chiudiamo automaticamente la modale dopo 1 secondo per comodità UX
                 setTimeout(() => {
                     imageModal.classList.add("hidden");
                 }, 1000);
@@ -330,17 +409,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let rowsHtml = "";
         cards.forEach(c => {
-            let imgHTML = `<span class="placeholder-icon">❌</span>`;
-            if (c.img) {
-                imgHTML = `
-                <div class="img-preview-container">
-                    <div class="card-thumb-placeholder" 
-                         data-full-src="${c.img}" 
-                         title="Clicca per caricare l'immagine">
-                         🎴
-                    </div>
-                </div>`;
-            }
+            // Risolve gli URL per questa riga
+            const realImgUrl = getCardImageUrl(c);
+            const placeholderImgUrl = getPlaceholderImageUrl(c);
+
+            // Generiamo la miniatura usando l'immagine del retro-carta dal repository 'tcg-assets-main'
+            // Se anche il retro-carta non dovesse caricarsi, mostra l'emoji '🎴'
+            let imgHTML = `
+            <div class="img-preview-container">
+                <div class="card-thumb-placeholder" 
+                     data-full-src="${realImgUrl}" 
+                     data-placeholder-src="${placeholderImgUrl}"
+                     title="Clicca per caricare l'immagine">
+                     <img src="${placeholderImgUrl}" 
+                          alt="🎴" 
+                          class="thumb-back-img" 
+                          onerror="this.onerror=null; this.outerHTML='🎴';">
+                </div>
+            </div>`;
 
             rowsHtml += `
             <tr>
