@@ -11,38 +11,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdPFusqD82Nqq6YHqV_lR4ttaVZghTPsuypX6qNYkYPaZBxPA/formResponse";
     const GOOGLE_FORM_ENTRY_ID = "entry.1793831591";
 
-    const GITHUB_USER = "CatusDC"; // Sostituisci con il tuo username GitHub se differente
+    const GITHUB_USER = "CatusDC"; // Username GitHub aggiornato
 
-    // Mappa la corrispondenza dei giochi con i rispettivi repository, cartelle e retro-carta
+    // Mappa la corrispondenza dei giochi con i rispettivi repository e i placeholder
     const GAME_MAPPING = {
         "c-lorcana": {
             repo: "tcg-assets-lrcn",
-            folder: "c-lorcana",
             placeholder: "background-lorcana"
         },
         "c-lorcana-jp": {
             repo: "tcg-assets-lrcn",
-            folder: "c-lorcana-jp",
             placeholder: "background-lorcana"
         },
         "c-pokemon-jp": {
             repo: "tcg-assets-pkmn",
-            folder: "c-pokemon-jp",
             placeholder: "background-pokemon"
         },
         "p-lorcana": {
             repo: "tcg-assets-lrcn",
-            folder: "p-lorcana",
             placeholder: "background-lorcana"
         },
         "p-riftbound": {
             repo: "tcg-assets-rftbnd",
-            folder: "p-riftbound",
             placeholder: "background-riftbound"
         },
         "c-riftbound": {
             repo: "tcg-assets-rftbnd",
-            folder: "c-riftbound",
             placeholder: "background-riftbound"
         }
     };
@@ -74,22 +68,21 @@ document.addEventListener("DOMContentLoaded", () => {
     // METODI RISOLUZIONE IMMAGINI DINAMICHE (CDN)
     // ==========================================
 
-    // Genera l'URL per l'immagine reale della carta (formato .webp)
+    // Genera l'URL per l'immagine reale della carta usando SOLO il valore del campo 'img' nel JSON
     function getCardImageUrl(card) {
         const gameKey = card.game;
         const map = GAME_MAPPING[gameKey];
-        if (!map) return null;
+        if (!map || !card.img) return null; // CORREZIONE: Se non c'è il campo 'img' nel JSON, non inventiamo il link!
 
-        // Se nel JSON 'img' è compilato usiamo quello, altrimenti creiamo il nome usando il 'tag'
-        let imgName = card.img || card.tag;
-        if (!imgName) return null;
+        let imgName = card.img.trim();
 
-        // Assicuriamo l'estensione .webp
+        // Assicuriamo che termini con l'estensione .webp
         if (!imgName.toLowerCase().endsWith(".webp")) {
             imgName += ".webp";
         }
 
-        return `https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${map.repo}@main/${map.folder}/${imgName}`;
+        // CORREZIONE: Inserita la sottocartella /img/ nell'URL di jsDelivr
+        return `https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${map.repo}@main/img/${imgName}`;
     }
 
     // Genera l'URL del retro-carta specifico (placeholder) salvato in 'tcg-assets-main/main/img/'
@@ -185,8 +178,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const realImgUrl = targetThumb.dataset.fullSrc;
                 const placeholderImgUrl = targetThumb.dataset.placeholderSrc;
                 
-                if (realImgUrl) {
-                    // Reset stato pulsante segnalazione
+                // Se la carta ha un'immagine reale associata
+                if (realImgUrl && realImgUrl !== "null" && realImgUrl !== "") {
                     if (reportErrorBtn) {
                         reportErrorBtn.classList.remove("success");
                         reportErrorBtn.innerText = "⚠️ Segnala Errore Immagine";
@@ -200,12 +193,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     // GESTIONE FALLBACK MODALE ZOOM
                     modalImg.onerror = () => {
-                        // Se l'immagine reale fallisce, tenta di caricare il retro-carta specifico
                         if (modalImg.src !== placeholderImgUrl) {
                             modalImg.src = placeholderImgUrl;
                             modalImg.alt = "Carta non trovata - Retro di default";
                         } else {
-                            // Se fallisce anche il retro-carta, mostra l'emoji come fallback definitivo
                             modalImg.onerror = null;
                             modalImg.src = ""; 
                             modalImg.alt = "❌ Immagine non disponibile";
@@ -213,6 +204,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     };
                     
                     modalImg.src = realImgUrl;
+                } else {
+                    // Se non c'è l'immagine reale, mostriamo direttamente il placeholder nello zoom senza fare chiamate esterne errate
+                    if (reportErrorBtn) {
+                        reportErrorBtn.classList.remove("success");
+                        reportErrorBtn.innerText = "⚠️ Segnala Errore Immagine";
+                    }
+                    activeImageUrl = placeholderImgUrl;
+                    modalImg.src = "";
+                    imageModal.classList.remove("hidden");
+                    modalImg.src = placeholderImgUrl;
+                    modalImg.alt = "Retro di default";
                 }
             }
         });
@@ -418,7 +420,7 @@ document.addEventListener("DOMContentLoaded", () => {
             let imgHTML = `
             <div class="img-preview-container">
                 <div class="card-thumb-placeholder" 
-                     data-full-src="${realImgUrl}" 
+                     data-full-src="${realImgUrl || ''}" 
                      data-placeholder-src="${placeholderImgUrl}"
                      title="Clicca per caricare l'immagine">
                      <img src="${placeholderImgUrl}" 
