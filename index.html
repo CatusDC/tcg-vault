@@ -60,11 +60,11 @@
             <div class="filterRow">
                 <input type="text" id="searchBox" placeholder="Cerca nome / tag">
             </div>
-            <!-- RIGA 2: SET (Scorrevole orizzontalmente) -->
+            <!-- RIGA 2: SET -->
             <div class="filterRow scrollableRow">
                 <div id="setFilter" class="chipGroup"></div>
             </div>
-            <!-- RIGA 3: RARITY (Scorrevole orizzontalmente) -->
+            <!-- RIGA 3: RARITY -->
             <div class="filterRow scrollableRow">
                 <div id="rarityFilter" class="chipGroup"></div>
             </div>
@@ -91,10 +91,14 @@
         </section>
     </div>
 
-    <!-- POPUP ZOOM IMMAGINE -->
+    <!-- POPUP ZOOM IMMAGINE CON SEGNALAZIONE -->
     <div id="imageModal" class="modal hidden">
         <span class="modal-close">&times;</span>
-        <img class="modal-content" id="modalImg">
+        <div class="modal-wrapper">
+            <img class="modal-content" id="modalImg">
+            <!-- Pulsante per inviare il log di errore su Google Form -->
+            <button id="reportErrorBtn" class="report-btn">⚠️ Segnala Errore Immagine</button>
+        </div>
     </div>
 
     <script src="app.js"></script>
