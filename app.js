@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         "p-riftbound": {
             repo: "tcg-assets-rftbnd",
-            folder: "p-riftbound",
+            folder: "img",
             placeholder: "background-riftbound"
         },
         "c-riftbound": {
