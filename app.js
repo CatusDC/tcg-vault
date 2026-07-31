@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdPFusqD82Nqq6YHqV_lR4ttaVZghTPsuypX6qNYkYPaZBxPA/formResponse";
     const GOOGLE_FORM_ENTRY_ID = "entry.1793831591";
 
-    const GITHUB_USER = "cdt5cer"; // Sostituisci con il tuo username GitHub se differente
+    const GITHUB_USER = "CatusDC"; // Sostituisci con il tuo username GitHub se differente
 
     // Mappa la corrispondenza dei giochi con i rispettivi repository, cartelle e retro-carta
     const GAME_MAPPING = {
